@@ -9,6 +9,22 @@ import { toutesLesRedirections } from './src/content/redirections';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  /**
+   * Poids maximal du corps d'une action serveur.
+   *
+   * Next en accepte un mega-octet par defaut. Une photographie de telephone en
+   * pese trois a cinq : le depot echouait sur une page d'erreur, sans un mot
+   * d'explication, au moment ou le candidat croyait avoir fini.
+   *
+   * Les images sont maintenant allegees dans le navigateur avant l'envoi
+   * (voir components/candidat/zone-depot.tsx). Cette marge sert aux PDF, qui
+   * ne se compriment pas de ce cote, et reste sous la limite de charge utile
+   * des fonctions de la plateforme.
+   */
+  experimental: {
+    serverActions: { bodySizeLimit: '6mb' },
+  },
+
   images: {
     formats: ['image/avif', 'image/webp'],
     // Tailles alignées sur les largeurs réellement rendues (mobile-first 360 px).

@@ -14,21 +14,27 @@
 
 @layer components {
   /* --- Champs -----------------------------------------------------------
-     Hauteur confortable, rayon franc, anneau de focus bleu : la saisie est le
-     geste le plus répété de ces écrans, et le plus souvent fait au pouce. */
+     La saisie est le geste le plus répété de ces écrans, et le plus souvent
+     fait au pouce. Le champ est donc haut, franchement arrondi, et posé sur
+     une teinte plutôt que sur du blanc : sur une page blanche, un champ blanc
+     cerné d'un filet gris ne se voit qu'à l'effort, et l'on hésite avant de
+     savoir où écrire.
+
+     Au moment où l'on écrit, le fond passe au blanc et l'anneau bleu se
+     referme : le champ actif se détache alors de tous les autres. */
   .champ {
-    @apply h-12 w-full rounded-xl border border-graphite-200 bg-paper px-4 text-[0.9375rem] text-ink-800;
-    @apply transition-[border-color,box-shadow] duration-200 outline-none;
-    @apply placeholder:text-graphite-400;
+    @apply h-13 w-full rounded-2xl border border-graphite-200 bg-paper-tint px-4 text-[0.9375rem] text-ink-800;
+    @apply transition-[border-color,box-shadow,background-color] duration-200 outline-none;
+    @apply placeholder:text-graphite-500;
   }
 
   .champ:hover:not(:focus) {
-    @apply border-graphite-300;
+    @apply border-graphite-300 bg-paper;
   }
 
   .champ:focus {
-    @apply border-ink-700;
-    box-shadow: 0 0 0 3px var(--color-ink-50);
+    @apply border-ink-700 bg-paper;
+    box-shadow: 0 0 0 4px var(--color-ink-50);
   }
 
   /* Un champ en erreur ne l'est jamais par la seule couleur : le message
@@ -42,19 +48,19 @@
   }
 
   textarea.champ {
-    @apply h-auto min-h-28 py-3 leading-relaxed;
+    @apply h-auto min-h-32 py-3.5 leading-relaxed;
   }
 
   select.champ {
-    @apply appearance-none pr-11;
+    @apply cursor-pointer appearance-none pr-12;
   }
 
   .etiquette {
-    @apply mb-1.5 block text-[0.8125rem] font-semibold text-graphite-700;
+    @apply mb-2 block text-[0.875rem] font-semibold text-ink-800;
   }
 
   .aide {
-    @apply mt-1.5 text-[0.8125rem] leading-snug text-graphite-500;
+    @apply mt-2 text-[0.8125rem] leading-snug text-graphite-500;
   }
 
   .erreur {
@@ -69,7 +75,7 @@
 
   /* --- Boutons ----------------------------------------------------------- */
   .bouton {
-    @apply inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-[0.875rem] font-semibold;
+    @apply inline-flex h-12 items-center justify-center gap-2 rounded-2xl px-6 text-[0.875rem] font-semibold;
     @apply transition-[background-color,box-shadow,transform] duration-200;
     @apply disabled:pointer-events-none disabled:opacity-55;
   }

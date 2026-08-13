@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { deposerPiece, retirerPiece } from '@/app/(candidat)/mon-dossier/actions';
+import { retirerPiece } from '@/app/(candidat)/mon-dossier/actions';
 import { IconCheck, IconFile } from '@/components/brand/icons';
 import { CadreEtape } from '@/components/candidat/cadre-etape';
-import { BoutonAction, Formulaire } from '@/components/candidat/formulaire';
-import { Alerte, Carte, Liste } from '@/components/candidat/ui';
+import { BoutonAction } from '@/components/candidat/formulaire';
+import { Alerte, Carte } from '@/components/candidat/ui';
+import { ZoneDepot } from '@/components/candidat/zone-depot';
 import { exigerDossier } from '@/lib/candidat';
 import { dossierModifiable } from '@/lib/etapes-dossier';
 import { cn } from '@/lib/utils';
@@ -135,26 +136,7 @@ export default async function EtapePieces() {
         {/* -------------------------------------------------- Nouveau dépôt */}
         {ouvert ? (
           <Carte titre="Ajouter un document">
-            <Formulaire action={deposerPiece} fichiers envoi="Déposer ce document">
-              <div className="grid gap-5 sm:grid-cols-2">
-                <Liste nom="nature" etiquette="De quel document s’agit-il&nbsp;?" options={NATURES} requis />
-
-                <div>
-                  <label htmlFor="fichier" className="etiquette">
-                    Le fichier
-                  </label>
-                  <input
-                    id="fichier"
-                    name="fichier"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/heic,application/pdf"
-                    required
-                    className="champ file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-ink-50 file:px-3 file:text-[0.8125rem] file:font-semibold file:text-ink-700 py-2.5"
-                  />
-                  <p className="aide">Photo ou PDF, 8 Mo au maximum.</p>
-                </div>
-              </div>
-            </Formulaire>
+            <ZoneDepot />
           </Carte>
         ) : null}
 

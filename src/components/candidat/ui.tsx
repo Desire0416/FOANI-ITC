@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { IconCheck, IconInfo } from '@/components/brand/icons';
+import { IconCheck, IconChevronDown, IconInfo } from '@/components/brand/icons';
 import { cn } from '@/lib/utils';
 
 /* ==========================================================================
@@ -129,12 +129,12 @@ export function Liste({
             </option>
           ))}
         </select>
-        <span
+        {/* Une vraie icône, pas un caractère typographique : celui-ci change
+            de dessin d'une police à l'autre, et grossit avec le texte. */}
+        <IconChevronDown
           aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-graphite-500"
-        >
-          ▾
-        </span>
+          className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-graphite-500"
+        />
       </div>
       {aide ? <p className="aide">{aide}</p> : null}
     </div>
