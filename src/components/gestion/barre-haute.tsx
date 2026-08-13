@@ -85,11 +85,25 @@ export function BarreHaute({
           ) : null}
         </Link>
 
-        {/* Identité : lisible d'un coup d'œil, et surtout le rôle — c'est lui
-            qui explique pourquoi tel écran est absent du menu. */}
-        <span className="flex items-center gap-2.5 rounded-xl border border-graphite-200 bg-paper py-1.5 pr-3 pl-1.5">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-ink-800 text-[0.6875rem] font-bold text-gold-400">
+        {/* Identité de l'agent — le seul endroit du dispositif où elle
+            figure. Le rôle compte autant que le nom : c'est lui qui explique
+            pourquoi tel écran est absent du menu.
+
+            Sous 1024 px il ne reste que les initiales, faute de place. Le nom
+            et le rôle ne disparaissent pas pour autant : ils restent dans le
+            titre au survol, et dans le texte que lit un lecteur d'écran. */}
+        <span
+          title={`${nomComplet} — ${fonction}`}
+          className="flex items-center gap-2.5 rounded-xl border border-graphite-200 bg-paper py-1.5 pr-3 pl-1.5"
+        >
+          <span
+            aria-hidden="true"
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-ink-800 text-[0.6875rem] font-bold text-gold-400"
+          >
             {initiales}
+          </span>
+          <span className="sr-only lg:hidden">
+            Connecté en tant que {nomComplet}, {fonction}
           </span>
           <span className="hidden flex-col leading-tight lg:flex">
             <span className="text-[0.8125rem] font-semibold text-ink-800">{nomComplet}</span>

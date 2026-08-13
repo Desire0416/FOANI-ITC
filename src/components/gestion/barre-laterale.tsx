@@ -15,7 +15,7 @@ import {
   IconTeacher,
   IconUsers,
 } from '@/components/brand/icons';
-import { LIBELLES_ROLE, type Role } from '@/payload/roles';
+import type { Role } from '@/payload/roles';
 import { cn } from '@/lib/utils';
 
 /* ==========================================================================
@@ -99,10 +99,12 @@ export const GROUPES: readonly Groupe[] = [
 ];
 
 export function BarreLaterale({
-  agent,
+  role,
   deconnexion,
 }: {
-  agent: { readonly nomComplet: string; readonly initiales: string; readonly role: Role };
+  /* Seul le role est utile ici : il decide des entrees visibles. L'identite
+     de l'agent vit dans la barre haute, et n'a pas a etre repetee. */
+  role: Role;
   deconnexion: () => Promise<void>;
 }) {
   const chemin = usePathname();
@@ -112,7 +114,7 @@ export function BarreLaterale({
     href === '/gestion' ? chemin === '/gestion' : chemin.startsWith(href);
 
   const autorise = (entree: Entree) =>
-    entree.roles === TOUS || entree.roles.includes(agent.role);
+    entree.roles === TOUS || entree.roles.includes(role);
 
   return (
     <>
@@ -229,30 +231,15 @@ export function BarreLaterale({
           </div>
         </nav>
 
-        {/* ------------------------------------------------------------ Agent */}
-        {/* L'identite figure aussi dans la barre haute, mais celle-ci se reduit
-            aux initiales sur telephone : ce bloc reste la seule facon d'y lire
-            son role en entier. Il ne mene nulle part, l'ecran des agents etant
-            reserve a l'administrateur. */}
-        <div className="border-t border-graphite-100 p-4">
-          <div className="flex items-center gap-3 px-2 py-2">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-ink-600 to-ink-800 text-[0.8125rem] font-bold text-paper">
-              {agent.initiales}
-            </span>
-            <span className="flex min-w-0 flex-col leading-tight">
-              <span className="truncate text-[0.875rem] font-semibold text-ink-800">
-                {agent.nomComplet}
-              </span>
-              <span className="truncate text-[0.75rem] text-graphite-500">
-                {LIBELLES_ROLE[agent.role]}
-              </span>
-            </span>
-          </div>
-
+        {/* --------------------------------------------------------- Sortie */}
+        {/* L'identité de l'agent vit désormais dans la seule barre haute : deux
+            fois le même nom sur un écran, c'est une fois de trop. Ne reste ici
+            que la sortie, à la place où on la cherche. */}
+        <div className="border-t border-graphite-100 p-3">
           <form action={deconnexion}>
             <button
               type="submit"
-              className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[0.875rem] text-graphite-600 transition-colors hover:bg-state-danger/[0.07] hover:text-state-danger"
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[0.875rem] text-graphite-600 transition-colors hover:bg-state-danger/[0.07] hover:text-state-danger"
             >
               <IconArrowUpRight className="h-[1.125rem] w-[1.125rem] shrink-0 rotate-180" />
               Fermer ma session

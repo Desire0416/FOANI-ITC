@@ -26,7 +26,7 @@ export default async function CoqueLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-dvh bg-paper-tint">
-      <BarreLaterale agent={agent} deconnexion={fermerSession} />
+      <BarreLaterale role={agent.role} deconnexion={fermerSession} />
 
       <div className="lg:pl-laterale">
         <BarreHaute
