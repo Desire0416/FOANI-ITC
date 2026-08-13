@@ -52,6 +52,37 @@ const repertoire = path.dirname(fileURLToPath(import.meta.url));
    seul, sous contrôle d'accès.
    ========================================================================== */
 
+/**
+ * Le secret de session, exigé sans détour.
+ *
+ * Payload refuse de démarrer sans lui, mais son message — « missing secret
+ * key » — arrive au milieu d'une trace de construction et ne dit pas où poser
+ * la valeur. Sur une plateforme de déploiement, c'est vingt minutes perdues.
+ * On échoue donc plus tôt, en français, avec la marche à suivre.
+ */
+function exigerSecret(): string {
+  const secret = process.env.PAYLOAD_SECRET;
+  if (secret && secret.length >= 32) return secret;
+
+  throw new Error(
+    [
+      '',
+      'PAYLOAD_SECRET est absent ou trop court (32 caractères au minimum).',
+      '',
+      'Cette chaîne signe les sessions des agents et des candidats. Elle doit',
+      'être tirée au hasard, et différente par environnement.',
+      '',
+      '  Générer    : node -e "console.log(crypto.randomBytes(32).toString(\'hex\'))"',
+      '  En local   : ajouter PAYLOAD_SECRET=… dans le fichier .env',
+      '  Sur Vercel : Settings → Environment Variables → Add New',
+      '',
+      'DATABASE_URL est requise au même titre : la construction lit la base',
+      'pour établir la liste des actualités publiées.',
+      '',
+    ].join('\n'),
+  );
+}
+
 const adressePostgres = process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? null;
 
 const stockageS3 =
@@ -130,7 +161,7 @@ export default buildConfig({
     },
   },
 
-  secret: process.env.PAYLOAD_SECRET ?? '',
+  secret: exigerSecret(),
 
   typescript: { outputFile: path.resolve(repertoire, 'payload-types.ts') },
 
