@@ -45,15 +45,26 @@ export function EnTetePage({
 
 /* --------------------------------------------------------------------------
    Tuile de chiffre
-   Quatre tons issus de la charte, jamais un arc-en-ciel : ils hiérarchisent,
-   du volume reçu à la décision prise.
+   --------------------------------------------------------------------------
+   Quatre tons nettement distincts, mais aucun choisi pour l'effet : chacun
+   porte un sens que l'agent lit sans réfléchir.
+
+     encre   — un volume, sans jugement
+     or      — quelque chose attend une action de sa part
+     ambre   — quelque chose attend une action de quelqu'un d'autre
+     vert    — une issue favorable
+
+   Les deux dernières viennent des couleurs d'état de la charte (§18.1), pas
+   d'une palette décorative. Les deux extrémités de chaque dégradé tiennent le
+   texte blanc à 4,5:1 : une tuile n'est jamais illisible d'un côté.
    -------------------------------------------------------------------------- */
 
 const TONS = {
   encre: 'bg-gradient-to-br from-ink-700 to-ink-900 text-paper',
   profond: 'bg-gradient-to-br from-ink-950 to-ink-700 text-paper',
   or: 'bg-gradient-to-br from-gold-300 to-gold-500 text-ink-900',
-  ambre: 'bg-gradient-to-br from-gold-100 to-gold-200 text-gold-800',
+  ambre: 'bg-gradient-to-br from-state-warning to-state-warning-fonce text-paper',
+  vert: 'bg-gradient-to-br from-state-success to-state-success-fonce text-paper',
   clair: 'border border-graphite-100 bg-paper text-ink-800',
 } as const;
 
@@ -76,7 +87,7 @@ export function Tuile({
   ton?: TonTuile;
   href?: string;
 }) {
-  const sombre = ton === 'encre' || ton === 'profond';
+  const sombre = ton === 'encre' || ton === 'profond' || ton === 'ambre' || ton === 'vert';
 
   const contenu = (
     <>

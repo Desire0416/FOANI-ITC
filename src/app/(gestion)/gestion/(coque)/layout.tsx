@@ -1,5 +1,6 @@
 import { BarreHaute } from '@/components/gestion/barre-haute';
 import { BarreLaterale } from '@/components/gestion/barre-laterale';
+import { LIBELLES_ROLE } from '@/payload/roles';
 import { exigerAgent, socle } from '@/lib/session';
 import { fermerSession } from '../(acces)/connexion/actions';
 
@@ -28,7 +29,12 @@ export default async function CoqueLayout({ children }: { children: React.ReactN
       <BarreLaterale agent={agent} deconnexion={fermerSession} />
 
       <div className="lg:pl-laterale">
-        <BarreHaute aInstruire={aInstruire} />
+        <BarreHaute
+          aInstruire={aInstruire}
+          initiales={agent.initiales}
+          nomComplet={agent.nomComplet}
+          fonction={LIBELLES_ROLE[agent.role]}
+        />
         <main className="px-5 py-7 lg:px-8 lg:py-9">{children}</main>
       </div>
     </div>

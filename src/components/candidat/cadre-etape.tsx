@@ -34,7 +34,12 @@ export function CadreEtape({
   return (
     <div className="mx-auto w-full max-w-6xl px-5 py-7 sm:px-8 sm:py-10">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:gap-12">
-        <div className="lg:sticky lg:top-8 lg:self-start">
+        {/* `min-w-0` n'est pas un détail : une cellule de grille prend par
+            défaut la largeur de son contenu. Sans cela, le rail — qui mesure
+            près d'un mètre d'écran une fois ses six étapes mises bout à bout —
+            élargissait la page entière au lieu de défiler dans son cadre, et
+            tout le portail se lisait de travers sur un téléphone. */}
+        <div className="min-w-0 lg:sticky lg:top-8 lg:self-start">
           <Rail dossier={dossier} courante={etape} />
         </div>
 

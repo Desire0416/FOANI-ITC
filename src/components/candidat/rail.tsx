@@ -18,7 +18,7 @@ import type { Candidature } from '@/payload-types';
 
 export function Rail({ dossier, courante }: { dossier: Candidature | null; courante: IdEtape }) {
   return (
-    <nav aria-label="Étapes du dossier" className="rail overflow-x-auto lg:overflow-visible">
+    <nav aria-label="Étapes du dossier" className="rail min-w-0 overflow-x-auto lg:overflow-visible">
       <ol className="flex min-w-max gap-2 lg:min-w-0 lg:flex-col lg:gap-1">
         {ETAPES.map((etape) => {
           const active = etape.id === courante;

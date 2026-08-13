@@ -386,9 +386,14 @@ export const PIED_COLONNES: readonly { readonly titre: string; readonly liens: r
     titre: 'Services',
     liens: [
       { libelle: 'Espace numérique', href: '/espace-numerique' },
+      { libelle: 'Mon dossier de candidature', href: '/mon-dossier' },
       { libelle: 'Rechercher sur le site', href: '/recherche' },
       { libelle: 'Contact et accès', href: '/contact' },
       { libelle: 'Plan du site', href: '/plan-du-site' },
+      /* Accès du personnel. Il n'a pas à figurer en évidence, mais il doit se
+         trouver : un agent qui ne sait pas où se connecter finit par demander
+         l'adresse, et l'adresse finit par circuler. */
+      { libelle: 'Accès du personnel', href: '/gestion/connexion' },
     ],
   },
 ];

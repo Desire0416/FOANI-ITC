@@ -8,8 +8,10 @@ import {
   IconFile,
   IconUsers,
 } from '@/components/brand/icons';
+import { Anneau, Courbe, type PartAnneau, type PointSerie } from '@/components/gestion/graphiques';
 import { Carte, EnTetePage, Pastille, Tuile, Vide } from '@/components/gestion/ui';
 import { CYCLE_LABELS, getFormation, titreComplet } from '@/content/formations';
+import type { Cycle } from '@/content/types';
 import { exigerAgent, socle } from '@/lib/session';
 
 export const metadata: Metadata = { title: 'Tableau de bord' };
@@ -41,6 +43,80 @@ const TONS_ETAT: Record<string, 'neutre' | 'encre' | 'or' | 'vert' | 'plein' | '
   desiste: 'rouge',
   brouillon: 'neutre',
 };
+
+/* --------------------------------------------------------------------------
+   Deux lectures du même jeu de dossiers
+   -------------------------------------------------------------------------- */
+
+/** Le lundi de la semaine contenant cette date, à minuit. */
+function lundi(date: Date): Date {
+  const jour = new Date(date);
+  jour.setHours(0, 0, 0, 0);
+  // getDay() rend 0 pour dimanche : on le ramène en fin de semaine.
+  const decalage = (jour.getDay() + 6) % 7;
+  jour.setDate(jour.getDate() - decalage);
+  return jour;
+}
+
+/**
+ * Dossiers reçus par semaine, sur les huit dernières.
+ *
+ * Les semaines sans dossier comptent pour zéro : sans elles, la courbe
+ * mentirait sur le rythme en rapprochant deux pics séparés d'un mois.
+ */
+function receptionParSemaine(
+  dossiers: readonly Record<string, string | undefined>[],
+): readonly PointSerie[] {
+  const semaines: { debut: Date; valeur: number }[] = [];
+  const depart = lundi(new Date());
+
+  for (let recul = 7; recul >= 0; recul -= 1) {
+    const debut = new Date(depart);
+    debut.setDate(debut.getDate() - recul * 7);
+    semaines.push({ debut, valeur: 0 });
+  }
+
+  const premiere = semaines[0]!.debut.getTime();
+
+  for (const dossier of dossiers) {
+    const brut = dossier.soumisLe ?? dossier.createdAt;
+    if (!brut) continue;
+    const date = new Date(brut);
+    if (Number.isNaN(date.getTime()) || date.getTime() < premiere) continue;
+
+    const rang = Math.floor((lundi(date).getTime() - premiere) / (7 * 24 * 60 * 60 * 1000));
+    const semaine = semaines[rang];
+    if (semaine) semaine.valeur += 1;
+  }
+
+  return semaines.map(({ debut, valeur }, index) => ({
+    // Une étiquette sur deux : huit dates à la suite ne se lisent pas.
+    etiquette:
+      index % 2 === 0 || index === semaines.length - 1
+        ? new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit' }).format(debut)
+        : '',
+    valeur,
+  }));
+}
+
+/** Répartition des dossiers par cycle, dans les tons de la charte. */
+function repartitionParCycle(
+  dossiers: readonly Record<string, string | undefined>[],
+): readonly PartAnneau[] {
+  const compte: Record<Cycle, number> = { bts: 0, licence: 0, certificat: 0, masterclass: 0 };
+
+  for (const dossier of dossiers) {
+    const formation = dossier.voeu1 ? getFormation(dossier.voeu1) : undefined;
+    if (formation) compte[formation.cycle] += 1;
+  }
+
+  return [
+    { libelle: CYCLE_LABELS.bts, valeur: compte.bts, couleur: 'var(--color-ink-800)' },
+    { libelle: CYCLE_LABELS.licence, valeur: compte.licence, couleur: 'var(--color-ink-500)' },
+    { libelle: CYCLE_LABELS.certificat, valeur: compte.certificat, couleur: 'var(--color-gold-400)' },
+    { libelle: CYCLE_LABELS.masterclass, valeur: compte.masterclass, couleur: 'var(--color-gold-200)' },
+  ];
+}
 
 function formatCourt(valeur: string | undefined): string {
   if (!valeur) return '—';
@@ -94,6 +170,24 @@ export default async function PageTableauDeBord() {
     })
     .catch(() => ({ docs: [] as unknown[] }));
 
+  /* Tous les dossiers soumis, en deux champs : de quoi tracer le rythme de
+     réception et la répartition par cycle sans multiplier les requêtes. */
+  const pourGraphiques = await payload
+    .find({
+      collection: 'candidatures',
+      where: { etat: { not_equals: 'brouillon' } },
+      sort: '-createdAt',
+      limit: 1000,
+      depth: 0,
+      select: { soumisLe: true, createdAt: true, voeu1: true } as never,
+      overrideAccess: true,
+    })
+    .then((resultat) => resultat.docs as Record<string, string | undefined>[])
+    .catch(() => [] as Record<string, string | undefined>[]);
+
+  const reception = receptionParSemaine(pourGraphiques);
+  const parCycle = repartitionParCycle(pourGraphiques);
+
   const heure = new Date().getHours();
   const salutation = heure < 12 ? 'Bonjour' : heure < 18 ? 'Bon après-midi' : 'Bonsoir';
   const pourcentage = (valeur: number) => (total > 0 ? `${Math.round((valeur / total) * 100)} %` : '—');
@@ -134,7 +228,7 @@ export default async function PageTableauDeBord() {
           complement={pourcentage(aInstruire)}
           icone={<IconClock />}
           ton="or"
-          href="/gestion/candidatures?etat=soumis"
+          href="/gestion/candidatures?vue=instruire"
         />
         <Tuile
           etiquette="Compléments demandés"
@@ -143,7 +237,7 @@ export default async function PageTableauDeBord() {
           complement={pourcentage(complements)}
           icone={<IconArrowUpRight />}
           ton="ambre"
-          href="/gestion/candidatures?etat=complement"
+          href="/gestion/candidatures?vue=complement"
         />
         <Tuile
           etiquette="Admis"
@@ -151,10 +245,19 @@ export default async function PageTableauDeBord() {
           detail="Décision favorable"
           complement={pourcentage(admis)}
           icone={<IconCheck />}
-          ton="profond"
-          href="/gestion/candidatures?etat=admis"
+          ton="vert"
+          href="/gestion/candidatures?vue=decides"
         />
       </div>
+
+      {/* -------------------------------------------------------- Réception */}
+      <Carte
+        titre="Réception des dossiers"
+        mention="Huit dernières semaines"
+        lien={{ libelle: 'Voir la liste', href: '/gestion/candidatures' }}
+      >
+        <Courbe serie={reception} titre="Dossiers reçus par semaine, sur les huit dernières semaines" />
+      </Carte>
 
       {/* ------------------------------------------------- Derniers mouvements */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
@@ -229,15 +332,13 @@ export default async function PageTableauDeBord() {
             </ul>
           </Carte>
 
-          <Carte titre="Rappel de cadrage">
-            <p className="text-[0.875rem] leading-relaxed text-graphite-600">
-              Le dispositif n’encaisse aucun fonds. Il enregistre une référence de transaction que
-              l’administration rapproche de son relevé.
-            </p>
-            <p className="mt-3 text-[0.875rem] leading-relaxed text-graphite-600">
-              Un dossier n’est jamais supprimé : il change d’état, et chaque décision conserve son
-              auteur et sa date.
-            </p>
+          <Carte titre="Répartition par cycle" mention="Dossiers soumis">
+            <Anneau
+              titre="Répartition des dossiers soumis par cycle de formation"
+              parts={parCycle}
+              centre={String(total)}
+              souscentre={total > 1 ? 'dossiers' : 'dossier'}
+            />
           </Carte>
         </div>
       </div>

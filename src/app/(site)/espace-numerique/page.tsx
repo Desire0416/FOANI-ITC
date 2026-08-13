@@ -1,6 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { IconArrowUpRight, IconFile, IconGraduation, IconMail, IconTeacher, IconUsers } from '@/components/brand/icons';
+import {
+  IconArrowUpRight,
+  IconFile,
+  IconGraduation,
+  IconMail,
+  IconShield,
+  IconTeacher,
+  IconUsers,
+} from '@/components/brand/icons';
 import { LaurelWreath } from '@/components/brand/marks';
 import { PageHero } from '@/components/layout/page-hero';
 import { Container, Pill, Section, SectionHeading } from '@/components/ui/primitives';
@@ -59,6 +67,16 @@ const SERVICES = [
     url: process.env.NEXT_PUBLIC_MESSAGERIE_URL ?? null,
     interne: null,
     pour: 'Étudiants et personnel',
+  },
+  {
+    id: 'gestion',
+    icone: IconShield,
+    titre: 'Espace du personnel',
+    corps:
+      'Instruction des candidatures, dossiers étudiants et publication des contenus du site. Accès réservé aux agents de l’établissement.',
+    url: '/gestion/connexion',
+    interne: null,
+    pour: 'Agents de l’établissement',
   },
 ] as const;
 

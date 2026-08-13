@@ -52,6 +52,10 @@
   --color-state-warning: #a15c00;
   --color-state-danger: #a01223;
   --color-state-info: #00168e;
+  /* Compagnons assombris, pour les dégradés des tuiles de chiffres : les deux
+     extrémités doivent tenir le blanc à 4,5:1. */
+  --color-state-success-fonce: #0a5a38;
+  --color-state-warning-fonce: #7a4600;
 
   /* --- Typographie ---------------------------------------------------------
      Fraunces : serif variable dont l'axe SOFT arrondit littéralement les
