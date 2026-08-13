@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { IconShield, IconTeacher, IconUsers } from '@/components/brand/icons';
 import { AgentLigne, type Agent } from '@/components/gestion/agent-ligne';
 import { Carte, EnTetePage, Tuile } from '@/components/gestion/ui';
-import { exigerAgent, socle } from '@/lib/session';
+import { exigerRole, socle } from '@/lib/session';
 import { LIBELLES_ROLE, PERIMETRES_ROLE, ROLES, type Role } from '@/payload/roles';
 
 export const metadata: Metadata = { title: 'Agents' };
@@ -37,7 +37,9 @@ function formatDate(valeur: string | undefined): string {
  * moindre privilège, encore faut-il que celui qui attribue sache ce qu'il donne.
  */
 export default async function PageAgents() {
-  const courant = await exigerAgent();
+  // La liste des agents et de leurs rôles n'est pas une donnée de lecture
+  // générale : elle décrit la répartition des droits du dispositif (§5.2).
+  const courant = await exigerRole(['administrateur']);
   const payload = await socle();
 
   const resultat = await payload

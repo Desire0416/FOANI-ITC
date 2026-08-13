@@ -93,7 +93,7 @@ export const GROUPES: readonly Groupe[] = [
   {
     titre: 'Administration',
     entrees: [
-      { libelle: 'Agents', href: '/gestion/agents', icone: IconTeacher, roles: TOUS },
+      { libelle: 'Agents', href: '/gestion/agents', icone: IconTeacher, roles: ['administrateur'] },
     ],
   },
 ];
