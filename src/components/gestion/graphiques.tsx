@@ -111,12 +111,23 @@ export function Courbe({
         ) : null}
       </svg>
 
+      {/* Huit dates à la suite ne se lisent pas : une sur deux est masquée à
+          l'écran. La donnée, elle, reste entière — c'est le tableau ci-dessous
+          qui la porte, et c'est lui que lit un lecteur d'écran. */}
       <div className="mt-2 flex justify-between text-[0.6875rem] text-graphite-400">
-        {serie.map((point, index) => (
-          <span key={point.etiquette} className={cn(index === serie.length - 1 && 'text-ink-700 font-semibold')}>
-            {point.etiquette}
-          </span>
-        ))}
+        {serie.map((point, index) => {
+          const dernier = index === serie.length - 1;
+          const montrer = index % 2 === 0 || dernier;
+          return (
+            <span
+              key={point.etiquette}
+              aria-hidden="true"
+              className={cn(dernier && 'font-semibold text-ink-700')}
+            >
+              {montrer ? point.etiquette : ''}
+            </span>
+          );
+        })}
       </div>
 
       {/* Le même contenu, en tableau : un graphique n'informe que ceux qui le

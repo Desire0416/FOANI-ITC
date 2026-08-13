@@ -89,12 +89,10 @@ function receptionParSemaine(
     if (semaine) semaine.valeur += 1;
   }
 
-  return semaines.map(({ debut, valeur }, index) => ({
-    // Une étiquette sur deux : huit dates à la suite ne se lisent pas.
-    etiquette:
-      index % 2 === 0 || index === semaines.length - 1
-        ? new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit' }).format(debut)
-        : '',
+  // Chaque semaine porte sa date : c'est le graphique qui en masque une sur
+  // deux à l'écran, pas la donnée qui les perd.
+  return semaines.map(({ debut, valeur }) => ({
+    etiquette: new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit' }).format(debut),
     valeur,
   }));
 }
