@@ -1,0 +1,88 @@
+@theme {
+  /* --- Bleu institutionnel -------------------------------------------------
+     ink-700 est le bleu exact du logo (#00168E : mot « FOANI », toque, livre).
+     ink-800 est le bleu de titrage relevé sur la maquette (#000060), assombri
+     pour le texte long. Les nuances claires sont dérivées par désaturation. */
+  --color-ink-950: #00061f;
+  --color-ink-900: #000a38;
+  --color-ink-800: #000f5e; /* maquette — titres */
+  --color-ink-700: #00168e; /* LOGO — exact */
+  --color-ink-600: #1b33a6;
+  --color-ink-500: #3b52be;
+  --color-ink-400: #6377d1;
+  --color-ink-300: #98a6e0;
+  --color-ink-200: #c2cbee;
+  --color-ink-100: #dde3f7;
+  --color-ink-50: #eff2fc;
+
+  /* --- Or du laurier -------------------------------------------------------
+     gold-400 est l'or exact du logo (#F7B500). gold-500 est la fin du dégradé
+     du laurier (#DC9E00). gold-300 est l'or du bouton « Candidater » de la
+     maquette (#FBCB03). gold-700 est la seule déclinaison lisible en texte
+     sur fond clair (5,5:1). */
+  --color-gold-800: #6b4b00;
+  --color-gold-700: #8a6100; /* texte or sur fond clair — AA */
+  --color-gold-600: #b87f00;
+  --color-gold-500: #dc9e00; /* LOGO — fin de dégradé du laurier */
+  --color-gold-400: #f7b500; /* LOGO — exact */
+  --color-gold-300: #fbcb03; /* maquette — bouton Candidater */
+  --color-gold-200: #fde08a;
+  --color-gold-100: #fef3d0;
+  --color-gold-50: #fffaec;
+
+  /* --- Gris ----------------------------------------------------------------
+     graphite-700 est le gris exact du logo (#373537, « International Training
+     College »). graphite-500 est le gris de paragraphe de la maquette. */
+  --color-graphite-900: #1c1b1d;
+  --color-graphite-700: #373537; /* LOGO — exact */
+  --color-graphite-600: #52555e;
+  --color-graphite-500: #6b6f79; /* maquette — paragraphe (4,96:1) */
+  --color-graphite-400: #8a8f99;
+  --color-graphite-300: #b6bac3;
+  --color-graphite-200: #d8dbe2;
+  --color-graphite-100: #e9ebf0;
+
+  /* --- Surfaces ------------------------------------------------------------ */
+  --color-paper: #ffffff;
+  --color-paper-tint: #f7f8fb; /* maquette — fond du hero */
+  --color-paper-warm: #fdfbf6;
+
+  /* --- Couleurs d'état (hors charte, produites pour l'interface, CDC §18.1) */
+  --color-state-success: #0f7a4d;
+  --color-state-warning: #a15c00;
+  --color-state-danger: #a01223;
+  --color-state-info: #00168e;
+
+  /* --- Typographie ---------------------------------------------------------
+     Fraunces : serif variable dont l'axe SOFT arrondit littéralement les
+     empattements — le pont demandé entre le « FOANI » gravé du logo et une
+     lettre moderne. Plus Jakarta Sans : grotesque humaniste aux terminaisons
+     légèrement arrondies, pour la lecture longue et l'interface. */
+  --font-display: var(--font-fraunces), 'Iowan Old Style', Georgia, serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  /* --- Rayons --------------------------------------------------------------
+     Registre volontairement court : la pilule, la carte, le média.
+     Rien entre les deux — la marque n'a pas de coin timide. */
+  --radius-pill: 9999px;
+  --radius-card: 1.25rem;
+  --radius-card-lg: 1.75rem;
+  --radius-media: 2rem;
+
+  /* --- Élévation -----------------------------------------------------------
+     Teintée de bleu institutionnel, jamais du noir neutre. */
+  --shadow-raise: 0 1px 2px rgb(0 22 142 / 0.04), 0 8px 24px -12px rgb(0 22 142 / 0.16);
+  --shadow-lift: 0 2px 4px rgb(0 22 142 / 0.05), 0 18px 40px -18px rgb(0 22 142 / 0.24);
+  --shadow-float: 0 4px 8px rgb(0 22 142 / 0.06), 0 32px 64px -24px rgb(0 22 142 / 0.28);
+
+  /* --- Rythme --------------------------------------------------------------
+     Conçu à 360 px puis élargi (CDC §18.2 « priorité au téléphone »). */
+  --spacing-section: 4.5rem;
+  --spacing-section-lg: 7.5rem;
+
+  /* --- Mouvement -----------------------------------------------------------
+     Une seule courbe pour tout le site : elle donne au mouvement une signature
+     reconnaissable au lieu d'un easing différent par composant. */
+  --ease-arc: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-arc-in: cubic-bezier(0.62, 0, 0.36, 1);
+}

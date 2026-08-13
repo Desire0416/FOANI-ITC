@@ -1,0 +1,74 @@
+@import 'tailwindcss';
+
+/* Les jetons de charte sont ceux du portail public : un agent doit percevoir
+   qu'il reste chez FITC en passant d'un espace à l'autre (§7.2). */
+@import '../theme.css';
+
+/* Champs, cartes, boutons et pastilles sont partagés avec le portail de
+   candidature : l'agent qui reprend un dossier retrouve les objets que le
+   candidat a manipulés. */
+@import '../composants.css';
+
+/* ==========================================================================
+   Back-office FOANI-ITC
+   --------------------------------------------------------------------------
+   Construit sur mesure plutôt qu'habillé par-dessus une interface générique.
+   Le §22.1 demande un socle d'administration éprouvé — c'est Payload, qui
+   reste la couche de données, le contrôle d'accès et l'API. Les écrans, eux,
+   sont les nôtres : un chargé d'admission y passera ses journées de campagne.
+   ========================================================================== */
+
+@theme {
+  /* Largeur de la barre latérale, reprise par la coque et par le contenu. */
+  --spacing-laterale: 17rem;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper-tint);
+    color: var(--color-graphite-700);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    color: var(--color-ink-800);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-variation-settings: 'SOFT' 28, 'WONK' 1;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-ink-700);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background-color: var(--color-gold-200);
+    color: var(--color-ink-900);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

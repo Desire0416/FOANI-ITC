@@ -1,0 +1,49 @@
+{
+  "name": "foani-itc-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Portail institutionnel — FOANI International Training College",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
+    "generate:types": "payload generate:types",
+    "generate:importmap": "payload generate:importmap",
+    "amorcer": "payload run scripts/amorcer.ts",
+    "amorcer-editorial": "payload run scripts/amorcer-editorial.ts",
+    "creer-agent": "payload run scripts/creer-agent.ts",
+    "amorcer-agents": "payload run scripts/amorcer-agents.ts"
+  },
+  "dependencies": {
+    "@payloadcms/db-postgres": "3.88.0",
+    "@payloadcms/db-sqlite": "3.88.0",
+    "@payloadcms/next": "3.88.0",
+    "@payloadcms/richtext-lexical": "3.88.0",
+    "@payloadcms/storage-s3": "3.88.0",
+    "@payloadcms/storage-vercel-blob": "3.88.0",
+    "@payloadcms/translations": "3.88.0",
+    "@payloadcms/ui": "3.88.0",
+    "graphql": "^16.14.2",
+    "next": "16.3.0",
+    "payload": "3.88.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "sharp": "^0.35.3"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "3.3.1",
+    "@tailwindcss/postcss": "4.1.13",
+    "@types/node": "22.18.1",
+    "@types/react": "19.1.13",
+    "@types/react-dom": "19.1.9",
+    "eslint": "9.35.0",
+    "eslint-config-next": "16.3.0",
+    "tailwindcss": "4.1.13",
+    "typescript": "5.9.2"
+  },
+  "packageManager": "pnpm@9.15.9"
+}

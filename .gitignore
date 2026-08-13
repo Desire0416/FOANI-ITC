@@ -1,0 +1,31 @@
+node_modules
+.next
+out
+build
+.env*.local
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+.eslintcache
+
+# Base de données locale et pièces déposées
+donnees/
+media/
+# Documents téléversés par les candidats : ce sont des données personnelles,
+# elles n'ont rien à faire dans un dépôt de code (§20.2).
+pieces/
+.env
+
+# --------------------------------------------------------------------------
+# Documents de travail de l'établissement
+# --------------------------------------------------------------------------
+# Le dépôt est public. Le cahier des charges fonctionnel et les maquettes
+# fournies sont des documents internes : ils restent sur le poste de travail.
+# Les visuels réellement utilisés par le site vivent dans `public/`, et sont
+# versionnés.
+CDC_Fonctionnel_FITC.docx
+/Image_hero.png
+/Section hero.png
+/arriere*.jpeg
+

@@ -1,0 +1,92 @@
+@import 'tailwindcss';
+
+/* Mêmes jetons que le portail public et que le back-office : le candidat doit
+   sentir qu'il est resté chez FITC en passant du site à son dossier (§7.2). */
+@import '../theme.css';
+
+/* Champs, cartes, boutons et pastilles communs aux espaces authentifiés. */
+@import '../composants.css';
+
+/* ==========================================================================
+   Portail de candidature FOANI-ITC — CDC §10
+   --------------------------------------------------------------------------
+   Cet espace est conçu pour un téléphone tenu à une main, sur un réseau qui
+   coupe (§18.2). D'où trois partis pris :
+
+   — aucun composant qui dépende du JavaScript pour s'afficher. Les formulaires
+     sont des formulaires ; ils fonctionnent avant l'hydratation ;
+   — une seule colonne, des cibles tactiles hautes, et le rail des étapes qui
+     défile horizontalement plutôt que de se replier dans un menu ;
+   — pas d'animation d'apparition : ce qui est à l'écran doit y être tout de
+     suite, même si le lot de scripts n'arrive jamais.
+   ========================================================================== */
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-paper-tint);
+    color: var(--color-graphite-700);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    color: var(--color-ink-800);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-variation-settings: 'SOFT' 28, 'WONK' 1;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-ink-700);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background-color: var(--color-gold-200);
+    color: var(--color-ink-900);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* --- Rail des étapes ---------------------------------------------------
+     Sur téléphone il défile horizontalement, sans barre visible ; à partir de
+     la tablette il se range en colonne à gauche du formulaire. */
+  .rail {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+}

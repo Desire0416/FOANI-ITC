@@ -1,0 +1,126 @@
+/* ==========================================================================
+   Pièces d'interface communes aux espaces authentifiés
+   --------------------------------------------------------------------------
+   Le back-office et le portail de candidature ne s'adressent pas au même
+   public, mais ils font le même geste : saisir, déposer, valider. Un champ
+   doit donc s'y dessiner de la même façon — un agent qui reprend le dossier
+   d'un candidat retrouve exactement les objets qu'a manipulés celui-ci.
+
+   Ce fichier ne contient ni couleur ni police propre : il ne fait qu'assembler
+   les jetons de `theme.css`, qui restent la source unique de la charte (§7.2).
+   Chaque espace importe ensuite Tailwind, le thème, puis ce fichier, et pose
+   lui-même le fond de sa page.
+   ========================================================================== */
+
+@layer components {
+  /* --- Champs -----------------------------------------------------------
+     Hauteur confortable, rayon franc, anneau de focus bleu : la saisie est le
+     geste le plus répété de ces écrans, et le plus souvent fait au pouce. */
+  .champ {
+    @apply h-12 w-full rounded-xl border border-graphite-200 bg-paper px-4 text-[0.9375rem] text-ink-800;
+    @apply transition-[border-color,box-shadow] duration-200 outline-none;
+    @apply placeholder:text-graphite-400;
+  }
+
+  .champ:hover:not(:focus) {
+    @apply border-graphite-300;
+  }
+
+  .champ:focus {
+    @apply border-ink-700;
+    box-shadow: 0 0 0 3px var(--color-ink-50);
+  }
+
+  /* Un champ en erreur ne l'est jamais par la seule couleur : le message
+     l'accompagne toujours, et c'est lui qui porte l'information (§18.3). */
+  .champ[aria-invalid='true'] {
+    @apply border-state-danger;
+  }
+
+  .champ[aria-invalid='true']:focus {
+    box-shadow: 0 0 0 3px rgb(160 18 35 / 0.12);
+  }
+
+  textarea.champ {
+    @apply h-auto min-h-28 py-3 leading-relaxed;
+  }
+
+  select.champ {
+    @apply appearance-none pr-11;
+  }
+
+  .etiquette {
+    @apply mb-1.5 block text-[0.8125rem] font-semibold text-graphite-700;
+  }
+
+  .aide {
+    @apply mt-1.5 text-[0.8125rem] leading-snug text-graphite-500;
+  }
+
+  .erreur {
+    @apply mt-1.5 flex items-start gap-1.5 text-[0.8125rem] leading-snug font-medium text-state-danger;
+  }
+
+  /* --- Cartes ------------------------------------------------------------ */
+  .carte {
+    @apply rounded-2xl border border-graphite-100 bg-paper;
+    box-shadow: 0 1px 2px rgb(0 22 142 / 0.04);
+  }
+
+  /* --- Boutons ----------------------------------------------------------- */
+  .bouton {
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-[0.875rem] font-semibold;
+    @apply transition-[background-color,box-shadow,transform] duration-200;
+    @apply disabled:pointer-events-none disabled:opacity-55;
+  }
+
+  .bouton:active {
+    @apply translate-y-px;
+  }
+
+  .bouton--principal {
+    @apply text-paper;
+    background-image: linear-gradient(135deg, var(--color-ink-700), var(--color-ink-900));
+    box-shadow: 0 10px 24px -12px var(--color-ink-700);
+  }
+
+  .bouton--principal:hover {
+    box-shadow: 0 14px 30px -12px var(--color-ink-700);
+  }
+
+  .bouton--or {
+    @apply bg-gold-300 text-ink-800;
+    box-shadow: 0 10px 24px -14px var(--color-gold-500);
+  }
+
+  .bouton--or:hover {
+    @apply bg-gold-400;
+  }
+
+  .bouton--contour {
+    @apply border border-graphite-200 bg-paper text-ink-800;
+  }
+
+  .bouton--contour:hover {
+    @apply border-ink-300 bg-ink-50;
+  }
+
+  .bouton--discret {
+    @apply text-graphite-600;
+  }
+
+  .bouton--discret:hover {
+    @apply bg-ink-50 text-ink-700;
+  }
+
+  /* --- Pastilles d'état --------------------------------------------------
+     Toujours accompagnées de leur libellé : aucune information n'est portée
+     par la seule couleur (§18.3). */
+  .pastille {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.75rem] font-semibold whitespace-nowrap;
+  }
+
+  .pastille__point {
+    @apply h-1.5 w-1.5 rounded-full bg-current;
+  }
+}
