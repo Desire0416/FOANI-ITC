@@ -252,9 +252,21 @@ modifient le schéma.
 
 ### 2. Base de données
 
-Le schéma est appliqué automatiquement à la première connexion. Pour figer ce
-comportement une fois le dispositif stabilisé, poser `PAYLOAD_MIGRATIONS=strictes`
-et passer par `payload migrate`.
+**Le schéma n'est pas appliqué au démarrage**, et il ne doit pas l'être.
+
+Payload sait aligner la base sur les collections à chaque initialisation. C'est
+commode en développement, et c'est une faute en service : le rapprochement
+rejoue des `ALTER TABLE` à chaque démarrage à froid, et il les envoie par la
+connexion poolée — qui, en mode transaction, ne les accepte pas. Constaté :
+quatre-vingts secondes d'attente, coupure de connexion, erreur 500.
+
+Le schéma se pose donc explicitement, une fois, par la **connexion directe** :
+
+```
+DATABASE_URL="$DATABASE_URL_UNPOOLED" PAYLOAD_DB_PUSH=1 pnpm amorcer
+```
+
+Ne jamais renseigner `PAYLOAD_DB_PUSH` dans l'environnement de la plateforme.
 
 **Sauvegarde et restauration (§21.1, critère éliminatoire du §24.4)** — la base
 étant PostgreSQL, la procédure tient en deux commandes, documentées partout :

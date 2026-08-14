@@ -114,11 +114,24 @@ export default buildConfig({
   db: adressePostgres
     ? postgresAdapter({
         pool: { connectionString: adressePostgres },
-        /* La plateforme applique le schéma au démarrage. En production, on
-           préférera des migrations explicites (`payload migrate`) une fois le
-           dispositif stabilisé : la variable ci-dessous ferme la porte sans
-           toucher au code. */
-        push: process.env.PAYLOAD_MIGRATIONS !== 'strictes',
+        /**
+         * Le schéma n'est PAS appliqué au démarrage.
+         *
+         * Payload sait aligner la base sur les collections à chaque
+         * initialisation (`push`). C'est commode en développement, et c'est
+         * une faute en service : le rapprochement rejoue des instructions
+         * `ALTER TABLE` à chaque démarrage à froid, et il les envoie par la
+         * connexion poolée — qui, en mode transaction, ne les accepte pas.
+         * Résultat observé : quatre-vingts secondes d'attente, une coupure de
+         * connexion, puis une erreur 500 sur une action de candidature.
+         *
+         * Le schéma se pose donc explicitement, par la connexion directe :
+         *     DATABASE_URL="$DATABASE_URL_UNPOOLED" PAYLOAD_DB_PUSH=1 pnpm amorcer
+         *
+         * Poser `PAYLOAD_DB_PUSH=1` reste possible en local, sur une base de
+         * travail. Jamais sur la base en service.
+         */
+        push: process.env.PAYLOAD_DB_PUSH === '1',
       })
     : sqliteAdapter({
         client: { url: process.env.DATABASE_URI ?? 'file:./donnees/fitc.db' },

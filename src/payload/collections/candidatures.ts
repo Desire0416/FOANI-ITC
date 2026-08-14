@@ -403,6 +403,22 @@ export const Candidatures: CollectionConfig = {
     },
   ],
   hooks: {
+    /**
+     * Tout se joue avant l'écriture, en une seule opération.
+     *
+     * Le journal était auparavant écrit après coup, par une seconde mise à
+     * jour lancée depuis `afterChange`. Sur SQLite cela passait ; sur
+     * PostgreSQL, cette seconde écriture visait une ligne que la première
+     * verrouillait encore, et attendait une transaction qui ne pouvait pas
+     * s'achever tant que le crochet ne rendait pas la main. Un interblocage,
+     * dénoué au bout d'une cinquantaine de secondes par le délai d'expiration
+     * — et l'envoi d'un dossier n'aboutissait jamais.
+     *
+     * Écrire le journal ici règle plus qu'un blocage : l'état et sa trace
+     * partent dans la même écriture. Il devient impossible qu'un dossier
+     * change d'état sans que le journal le dise, ce qui est précisément ce
+     * que demande le §10.3.
+     */
     beforeChange: [
       async ({ data, operation, req, originalDoc }) => {
         // Numéro de dossier attribué une seule fois, à la création.
@@ -417,43 +433,29 @@ export const Candidatures: CollectionConfig = {
           data.decisionAgent = req.user.id;
         }
 
-        return data;
-      },
-    ],
-    afterChange: [
-      async ({ doc, previousDoc, req, operation, context }) => {
-        // L'écriture du journal est elle-même une mise à jour : sans cette
-        // garde, le crochet se rappellerait lui-même.
-        if (context?.journalisation) return doc;
-        if (operation !== 'update') return doc;
-        if (doc.etat === previousDoc?.etat) return doc;
+        // Chaque changement d'état laisse sa trace, avec son auteur et sa date.
+        const etatChange =
+          operation === 'update' &&
+          typeof data.etat === 'string' &&
+          data.etat !== originalDoc?.etat;
 
-        const auteur =
-          req.user?.collection === 'utilisateurs'
-            ? `${req.user.nomComplet ?? req.user.email}`
-            : 'Candidat';
+        if (etatChange) {
+          const auteur =
+            req.user?.collection === 'utilisateurs'
+              ? String(req.user.nomComplet ?? req.user.email)
+              : 'Candidat';
 
-        try {
-          await req.payload.update({
-            collection: 'candidatures',
-            id: doc.id,
-            data: {
-              journal: [
-                ...(doc.journal ?? []),
-                {
-                  date: new Date().toISOString(),
-                  action: `État : ${previousDoc?.etat ?? '—'} → ${doc.etat}`,
-                  auteur,
-                },
-              ],
+          data.journal = [
+            ...((originalDoc?.journal as unknown[] | undefined) ?? []),
+            {
+              date: new Date().toISOString(),
+              action: `État : ${originalDoc?.etat ?? '—'} → ${data.etat}`,
+              auteur,
             },
-            overrideAccess: true,
-            context: { journalisation: true },
-          });
-        } catch {
-          // Le journal ne doit jamais bloquer l'instruction d'un dossier.
+          ];
         }
-        return doc;
+
+        return data;
       },
     ],
   },
