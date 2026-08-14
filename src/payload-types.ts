@@ -473,6 +473,65 @@ export interface Candidature {
   decisionDate?: string | null;
   decisionAgent?: (number | null) | Utilisateur;
   /**
+   * Détermine la civilité portée sur les documents délivrés.
+   */
+  sexe?: ('feminin' | 'masculin') | null;
+  nomActe?: string | null;
+  prenomsActe?: string | null;
+  /**
+   * Celui qu’on emploie au quotidien, s’il diffère.
+   */
+  prenomUsuel?: string | null;
+  paysNaissance?: string | null;
+  lieuNaissanceActe?: string | null;
+  natureActe?: ('extrait' | 'copie-integrale' | 'jugement-suppletif' | 'acte-consulaire' | 'en-cours') | null;
+  numeroActe?: string | null;
+  dateActe?: string | null;
+  centreActe?: string | null;
+  situationMatrimoniale?: ('celibataire' | 'marie' | 'divorce' | 'veuf') | null;
+  naturePieceIdentite?: ('cni' | 'attestation' | 'passeport' | 'sejour') | null;
+  numeroPieceIdentite?: string | null;
+  telephoneSecond?: string | null;
+  /**
+   * Numéro d’assuré uniquement. Aucune information de santé n’est demandée ni conservée.
+   */
+  numeroCmu?: string | null;
+  pereNom?: string | null;
+  pereSituation?: ('vivant' | 'decede' | 'inconnu') | null;
+  mereNom?: string | null;
+  mereSituation?: ('vivante' | 'decedee' | 'inconnue') | null;
+  /**
+   * Exigé si l’étudiant est mineur, ou si aucun parent ne répond.
+   */
+  repondantNom?: string | null;
+  repondantLien?: string | null;
+  repondantTelephone?: string | null;
+  residenceVille?: string | null;
+  residenceQuartier?: string | null;
+  residenceRepere?: string | null;
+  hebergement?: ('cite' | 'famille' | 'location' | 'heberge' | 'internat' | 'sans') | null;
+  /**
+   * Si oui, l’établissement produit d’office le certificat de scolarité et le reçu que réclame le dossier de logement.
+   */
+  demandeLogement?: ('oui' | 'non') | null;
+  parentsVille?: string | null;
+  parentsPays?: string | null;
+  urgenceNom?: string | null;
+  urgenceLien?: string | null;
+  urgenceTelephone?: string | null;
+  urgenceTelephoneSecond?: string | null;
+  urgenceVille?: string | null;
+  urgenceQuartier?: string | null;
+  /**
+   * Portrait cadré selon les normes d’identité. Imprimé sur la carte étudiant.
+   */
+  photo?: (number | null) | Piece;
+  /**
+   * Horodatage du consentement à l’impression de la photographie sur la carte.
+   */
+  photoConsentieLe?: string | null;
+  inscriptionCompleteeLe?: string | null;
+  /**
    * §10.3 — conserve l’auteur et la date de chaque décision.
    */
   journal?:
@@ -906,6 +965,44 @@ export interface CandidaturesSelect<T extends boolean = true> {
   decisionConditions?: T;
   decisionDate?: T;
   decisionAgent?: T;
+  sexe?: T;
+  nomActe?: T;
+  prenomsActe?: T;
+  prenomUsuel?: T;
+  paysNaissance?: T;
+  lieuNaissanceActe?: T;
+  natureActe?: T;
+  numeroActe?: T;
+  dateActe?: T;
+  centreActe?: T;
+  situationMatrimoniale?: T;
+  naturePieceIdentite?: T;
+  numeroPieceIdentite?: T;
+  telephoneSecond?: T;
+  numeroCmu?: T;
+  pereNom?: T;
+  pereSituation?: T;
+  mereNom?: T;
+  mereSituation?: T;
+  repondantNom?: T;
+  repondantLien?: T;
+  repondantTelephone?: T;
+  residenceVille?: T;
+  residenceQuartier?: T;
+  residenceRepere?: T;
+  hebergement?: T;
+  demandeLogement?: T;
+  parentsVille?: T;
+  parentsPays?: T;
+  urgenceNom?: T;
+  urgenceLien?: T;
+  urgenceTelephone?: T;
+  urgenceTelephoneSecond?: T;
+  urgenceVille?: T;
+  urgenceQuartier?: T;
+  photo?: T;
+  photoConsentieLe?: T;
+  inscriptionCompleteeLe?: T;
   journal?:
     | T
     | {

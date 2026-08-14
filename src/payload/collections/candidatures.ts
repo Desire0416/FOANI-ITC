@@ -1,4 +1,5 @@
 import type { CollectionConfig, Where } from 'payload';
+import { CHAMPS_INSCRIPTION } from '../champs-inscription';
 import { CYCLE_LABELS, FORMATIONS, titreComplet } from '@/content/formations';
 import { reserveA, siensOuRoles, suppressionInterdite } from '../acces';
 import { ROLES_CANDIDATURES } from '../roles';
@@ -393,6 +394,9 @@ export const Candidatures: CollectionConfig = {
         },
       ],
     },
+
+    /* --------------------------------- Dossier d'inscription — §5.1 étape 4 */
+    CHAMPS_INSCRIPTION,
 
     /* ----------------------------------------------------------- Journal */
     {

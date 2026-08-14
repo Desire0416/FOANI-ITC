@@ -100,7 +100,7 @@ export const RUBRIQUES: readonly Rubrique[] = [
     href: '/mon-dossier/inscription',
     actifSur: [],
     phases: ['inscription'],
-    ouverte: false,
+    ouverte: true,
   },
   {
     cle: 'scolarite',

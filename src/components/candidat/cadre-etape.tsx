@@ -44,9 +44,7 @@ export function CadreEtape({
 
       {/* Le bandeau reste hors de la grille : il porte sur tout l'écran, pas
           sur la seule colonne du formulaire. */}
-      <nav className="carte p-2">
-        <Rail dossier={dossier} courante={etape} />
-      </nav>
+      <Rail dossier={dossier} courante={etape} cadre />
 
       {ouvert ? null : (
         <Alerte ton="attention" titre="Ce dossier n’est plus modifiable">

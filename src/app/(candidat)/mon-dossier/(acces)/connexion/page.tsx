@@ -24,7 +24,7 @@ export default async function PageConnexionCandidat() {
       pied={
         <>
           Vous n’avez pas encore de compte&nbsp;?{' '}
-          <Link href="/mon-dossier/inscription" className="font-semibold text-ink-700 hover:text-ink-600">
+          <Link href="/mon-dossier/creer-compte" className="font-semibold text-ink-700 hover:text-ink-600">
             En créer un
           </Link>
           .

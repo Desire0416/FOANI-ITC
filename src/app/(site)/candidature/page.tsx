@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 /** Le dépôt en ligne se fait dans le dispositif lui-même (CDC §10). */
-const PORTAIL = '/mon-dossier/inscription';
+const PORTAIL = '/mon-dossier/creer-compte';
 
 const A_PREPARER = [
   'Une pièce d’identité en cours de validité.',
