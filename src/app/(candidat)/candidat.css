@@ -15,8 +15,10 @@
 
    — aucun composant qui dépende du JavaScript pour s'afficher. Les formulaires
      sont des formulaires ; ils fonctionnent avant l'hydratation ;
-   — une seule colonne, des cibles tactiles hautes, et le rail des étapes qui
-     défile horizontalement plutôt que de se replier dans un menu ;
+   — une navigation visible sans être ouverte : barre d'onglets fixée en bas
+     sur téléphone, barre latérale sur grand écran. Un menu caché derrière un
+     bouton suppose un script arrivé, et un pouce qui atteint le coin haut
+     gauche — deux paris que ce public ne permet pas de tenir ;
    — pas d'animation d'apparition : ce qui est à l'écran doit y être tout de
      suite, même si le lot de scripts n'arrive jamais.
    ========================================================================== */
@@ -39,7 +41,6 @@
     font-family: var(--font-sans);
     font-synthesis-weight: none;
     -webkit-font-smoothing: antialiased;
-    overflow-x: clip;
   }
 
   h1,
@@ -79,8 +80,10 @@
 
 @layer components {
   /* --- Rail des étapes ---------------------------------------------------
-     Sur téléphone il défile horizontalement, sans barre visible ; à partir de
-     la tablette il se range en colonne à gauche du formulaire. */
+     Un bandeau, sur tous les écrans : il défile horizontalement quand les six
+     étapes ne tiennent pas, sans barre de défilement visible. La colonne de
+     gauche lui est retirée depuis que l'espace a sa propre barre latérale —
+     deux colonnes de navigation adjacentes ne se lisent pas. */
   .rail {
     scrollbar-width: none;
     -ms-overflow-style: none;

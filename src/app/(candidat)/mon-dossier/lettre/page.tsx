@@ -54,7 +54,7 @@ export default async function LettreAdmission() {
       'inscrit',
       'acces-ouverts',
     ].includes(dossier.etat);
-    if (!dejaAdmis) redirect('/mon-dossier/suivi');
+    if (!dejaAdmis) redirect('/mon-dossier');
   }
 
   const { intitule, niveau } = nommerFormation(dossier.voeu1);
@@ -100,7 +100,7 @@ export default async function LettreAdmission() {
       numero={lettre.numero}
       code={lettre.code}
       delivreLe={lettre.delivreLe}
-      retour="/mon-dossier/suivi"
+      retour="/mon-dossier/documents"
     >
       <Paragraphe>
         <strong>{porte.titulaire}</strong>,

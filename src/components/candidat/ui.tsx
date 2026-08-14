@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { IconCheck, IconChevronDown, IconInfo } from '@/components/brand/icons';
+import { ETAPES } from '@/lib/etapes-dossier';
 import { cn } from '@/lib/utils';
 
 /* ==========================================================================
@@ -23,7 +24,7 @@ export function EnTeteEtape({
   return (
     <header>
       <p className="text-[0.6875rem] font-bold tracking-[0.16em] text-ink-700 uppercase">
-        Étape {numero} sur 6
+        Étape {numero} sur {ETAPES.length}
       </p>
       <h1 className="mt-2 text-[1.75rem] leading-tight sm:text-[2.125rem]">{titre}</h1>
       {chapo ? (

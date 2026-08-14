@@ -84,6 +84,12 @@
   --spacing-section: 4.5rem;
   --spacing-section-lg: 7.5rem;
 
+  /* Largeur de la barre latérale des espaces authentifiés. Elle vit ici, et
+     non dans la feuille d'un espace, parce que deux barres latérales de
+     largeurs différentes se décaleraient de leur propre `pl-` le jour où l'un
+     des deux chiffres bougerait seul. */
+  --spacing-laterale: 17rem;
+
   /* --- Mouvement -----------------------------------------------------------
      Une seule courbe pour tout le site : elle donne au mouvement une signature
      reconnaissable au lieu d'un easing différent par composant. */

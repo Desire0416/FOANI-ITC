@@ -18,11 +18,6 @@
    sont les nôtres : un chargé d'admission y passera ses journées de campagne.
    ========================================================================== */
 
-@theme {
-  /* Largeur de la barre latérale, reprise par la coque et par le contenu. */
-  --spacing-laterale: 17rem;
-}
-
 @layer base {
   *,
   *::before,

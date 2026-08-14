@@ -519,5 +519,5 @@ export async function soumettreDossier(_precedent: Etat, _donnees: FormData): Pr
   }
 
   revalidatePath('/mon-dossier', 'layout');
-  redirect('/mon-dossier/suivi?envoye=1');
+  redirect('/mon-dossier?envoye=1');
 }

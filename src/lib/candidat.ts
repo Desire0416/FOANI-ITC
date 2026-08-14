@@ -1,4 +1,5 @@
 import { headers as entetes } from 'next/headers';
+import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { getPayload } from 'payload';
 import config from '@payload-config';
@@ -59,8 +60,15 @@ export async function exigerCandidat(): Promise<Candidat> {
  * (§10.1, un premier et un second vœu dans le même dossier). En cas de
  * pluralité — un dossier repris par la scolarité, par exemple —, on retient
  * le plus récent, qui est celui que le candidat est en train de remplir.
+ *
+ * Mémorisé le temps d'une requête. La coque lit le dossier pour composer la
+ * navigation, la page le relit pour l'afficher : sans cette mémorisation,
+ * chaque navigation coûterait deux fois la même interrogation de base. Sur le
+ * réseau visé, c'est du temps que le candidat voit passer.
  */
-export async function dossierCourant(candidatId: string): Promise<Candidature | null> {
+export const dossierCourant = cache(async function dossierCourant(
+  candidatId: string,
+): Promise<Candidature | null> {
   const payload = await getPayload({ config });
 
   const { docs } = await payload.find({
@@ -74,7 +82,7 @@ export async function dossierCourant(candidatId: string): Promise<Candidature | 
   });
 
   return docs[0] ?? null;
-}
+});
 
 /** Candidat connecté et son dossier. Le dossier peut ne pas exister encore. */
 export async function sessionCandidat(): Promise<{

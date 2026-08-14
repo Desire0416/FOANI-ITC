@@ -43,6 +43,7 @@ export default async function EtapeRecapitulatif() {
 
   return (
     <CadreEtape
+      sansContexte
       dossier={dossier}
       etape="recapitulatif"
       chapo="Relisez tout avant d’envoyer. Une fois le dossier envoyé, vous ne pourrez plus le modifier — sauf si nous vous demandons un complément."
@@ -172,9 +173,12 @@ export default async function EtapeRecapitulatif() {
 
         {/* ------------------------------------------------------------ Envoi */}
         {ouvert ? (
-          <div className="carte border-ink-100 bg-ink-50 p-5 sm:p-7">
-            <h2 className="text-[1.125rem] leading-snug">Envoyer mon dossier</h2>
-            <p className="mt-2 text-[0.9375rem] leading-relaxed text-graphite-600">
+          <section className="carte overflow-hidden">
+            <header className="border-b border-graphite-100 bg-paper-tint px-5 py-4">
+              <h2 className="text-[1.0625rem] leading-snug">Envoyer mon dossier</h2>
+            </header>
+            <div className="p-5 sm:p-6">
+            <p className="text-[0.9375rem] leading-relaxed text-graphite-600">
               Votre dossier partira au service des admissions. Vous ne pourrez plus le modifier, mais
               vous pourrez suivre son avancement à tout moment depuis cet espace.
             </p>
@@ -198,10 +202,11 @@ export default async function EtapeRecapitulatif() {
                 Étape précédente
               </Link>
             </div>
-          </div>
+            </div>
+          </section>
         ) : (
           <Alerte titre="Dossier déjà envoyé">
-            <Link href="/mon-dossier/suivi" className="font-semibold underline">
+            <Link href="/mon-dossier" className="font-semibold underline">
               Suivre son avancement
             </Link>
           </Alerte>
