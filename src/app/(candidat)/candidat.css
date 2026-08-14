@@ -92,4 +92,20 @@
   .rail::-webkit-scrollbar {
     display: none;
   }
+
+  /* --- Documents officiels -----------------------------------------------
+     Les navigateurs suppriment par défaut les fonds de couleur à l'impression,
+     pour économiser l'encre. C'est une bonne règle sur une page web ; c'en est
+     une mauvaise sur un acte administratif, dont le filet bicolore, le
+     soulignement du titre et les lignes alternées du tableau sont ce qui le
+     rend reconnaissable au guichet. On demande donc explicitement le rendu
+     fidèle — sur ce seul document, pas sur le reste du portail. */
+  .acte {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page {
+    margin: 1.4cm;
+  }
 }

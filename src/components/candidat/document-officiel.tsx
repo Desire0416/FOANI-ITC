@@ -1,8 +1,12 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { ETABLISSEMENT, CONTACT } from '@/content/site';
+import { adresseVerification, codeQR } from '@/payload/code-qr';
 
 /** Le domaine réellement servi : c'est lui qu'on imprime sur le document. */
-const ADRESSE_VERIFICATION = `${(process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.foani-itc.ci').replace(/^https?:\/\//, '').replace(/\/$/, '')}/verifier`;
+const DOMAINE = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.foani-itc.ci')
+  .replace(/^https?:\/\//, '')
+  .replace(/\/$/, '');
 
 /* ==========================================================================
    L'habillage d'un document délivré — Note complémentaire §5.2
@@ -20,13 +24,21 @@ const ADRESSE_VERIFICATION = `${(process.env.NEXT_PUBLIC_APP_URL ?? 'https://www
    PDF » est une fonction que tout navigateur, y compris sur téléphone, sait
    faire ; y ajouter une dépendance serveur alourdirait le déploiement sans
    rien apporter au titulaire du document.
+
+   Sur la composition : elle suit celle d'un acte administratif, pas celle
+   d'une page web. Marque centrée, filet bicolore, titre souligné, tableau des
+   mentions à lignes alternées, et un pied qui sépare nettement ce qui
+   authentifie — le code et son motif — de ce qui engage : la signature du
+   service. Ce n'est pas une coquetterie. Un document qui ne ressemble pas à un
+   document n'est pas présenté à un guichet.
    ========================================================================== */
 
-export function DocumentOfficiel({
+export async function DocumentOfficiel({
   titre,
   numero,
   code,
   delivreLe,
+  destinataire,
   retour,
   children,
 }: {
@@ -34,6 +46,7 @@ export function DocumentOfficiel({
   numero: string;
   code: string;
   delivreLe: string;
+  destinataire?: string;
   retour: string;
   children: React.ReactNode;
 }) {
@@ -43,68 +56,115 @@ export function DocumentOfficiel({
     year: 'numeric',
   });
 
+  const qr = await codeQR(code);
+
   return (
-    <div className="min-h-dvh bg-graphite-100 py-0 print:bg-white print:py-0 sm:py-8">
+    <div className="min-h-dvh bg-graphite-100 print:bg-white">
       {/* Barre d'outils — à l'écran seulement. */}
       <div className="mx-auto flex w-full max-w-[21cm] flex-wrap items-center justify-between gap-3 px-5 py-4 print:hidden">
         <Link href={retour} className="text-[0.875rem] font-semibold text-ink-700 hover:underline">
-          ← Retour à mon dossier
+          ← Retour à mes documents
         </Link>
         <ImprimerCeDocument />
       </div>
 
-      <article className="mx-auto w-full max-w-[21cm] bg-paper px-6 py-10 shadow-[0_1px_3px_rgba(16,24,40,0.08)] print:max-w-none print:px-0 print:py-0 print:shadow-none sm:px-[2.2cm] sm:py-[2cm]">
+      <article className="acte mx-auto w-full max-w-[21cm] bg-paper px-6 py-8 text-ink-900 shadow-[0_1px_3px_rgba(16,24,40,0.08)] print:max-w-none print:px-0 print:py-0 print:shadow-none sm:px-[1.9cm] sm:py-[1.6cm]">
         {/* --------------------------------------------------------- En-tête */}
-        <header className="flex flex-wrap items-start justify-between gap-6 border-b-2 border-ink-800 pb-5">
-          <div className="min-w-0">
-            <p className="font-display text-[1.25rem] leading-tight font-semibold text-ink-800">
-              {ETABLISSEMENT.nom}
-            </p>
-            <p className="mt-1 text-[0.8125rem] text-graphite-600">
-              {ETABLISSEMENT.positionnement} — {ETABLISSEMENT.ville}, {ETABLISSEMENT.pays}
-            </p>
-            <p className="mt-0.5 text-[0.8125rem] text-graphite-600">
-              {CONTACT.telephone.affichage} — {CONTACT.courriel.valeur}
-            </p>
+        <header>
+          <Image
+            src="/brand/logo-horizontal.png"
+            alt="FOANI International Training College"
+            width={2172}
+            height={724}
+            sizes="400px"
+            priority
+            className="mx-auto h-[3.25rem] w-auto sm:h-[4.25rem]"
+          />
+
+          <div className="mt-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+            <div className="text-[0.6875rem] leading-relaxed text-graphite-600">
+              <p>
+                {ETABLISSEMENT.positionnement} · {ETABLISSEMENT.ville}, {ETABLISSEMENT.pays}
+              </p>
+              <p>
+                {CONTACT.telephone.affichage} &nbsp;|&nbsp; {CONTACT.courriel.valeur}
+              </p>
+            </div>
+            <div className="text-right text-[0.6875rem] leading-relaxed">
+              <p className="font-semibold text-ink-800">N° {numero}</p>
+              <p className="text-graphite-600">
+                {ETABLISSEMENT.ville}, le {date}
+              </p>
+            </div>
           </div>
-          <div className="text-[0.8125rem] text-graphite-600 sm:text-right">
-            <p className="font-semibold text-ink-800">N° {numero}</p>
-            <p className="mt-0.5">{ETABLISSEMENT.ville}, le {date}</p>
+
+          {/* Le filet bicolore : quatre cinquièmes d'encre, un cinquième d'or.
+              C'est la seule ornementation du document, et elle porte les deux
+              couleurs de la charte sans rien coûter à l'impression. */}
+          <div aria-hidden="true" className="mt-2 flex h-[5px]">
+            <span className="flex-[4] bg-ink-800" />
+            <span className="flex-1 bg-gold-400" />
           </div>
         </header>
 
         {/* ----------------------------------------------------------- Titre */}
-        <h1 className="mt-9 text-center font-display text-[1.5rem] font-semibold tracking-tight text-ink-800 uppercase">
-          {titre}
-        </h1>
+        <div className="mt-8 text-center">
+          <h1 className="font-display text-[1.375rem] font-semibold tracking-[0.01em] text-ink-800 uppercase sm:text-[1.5rem]">
+            {titre}
+          </h1>
+          <span aria-hidden="true" className="mx-auto mt-2 block h-[5px] w-28 bg-gold-400" />
+        </div>
 
-        <div className="mt-8 text-[0.9375rem] leading-[1.75] text-ink-800">{children}</div>
+        {/* ---------------------------------------------------------- Corps */}
+        {destinataire ? (
+          <p className="mt-8 text-[0.875rem]">
+            <span className="text-graphite-600">À l’attention de&nbsp;: </span>
+            <strong className="font-semibold text-ink-800">{destinataire}</strong>
+          </p>
+        ) : null}
+
+        <div className="mt-4 text-[0.875rem] leading-[1.7] text-ink-900">{children}</div>
 
         {/* ----------------------------------------------------- Vérification */}
-        <footer className="mt-10 border-t border-graphite-200 pt-5">
-          <div className="flex flex-wrap items-end justify-between gap-6">
+        <footer className="mt-9 grid gap-0 border border-graphite-200 border-t-[3px] border-t-gold-400 sm:grid-cols-[minmax(0,1fr)_14rem]">
+          <div className="flex items-start gap-4 p-4">
+            <div
+              /* Le motif est produit sur le serveur, en SVG : il reste net à
+                 l'impression, et ne dépend d'aucun chargement extérieur au
+                 moment précis où l'on imprime. */
+              aria-hidden="true"
+              className="h-[4.5rem] w-[4.5rem] shrink-0 [&>svg]:h-full [&>svg]:w-full"
+              dangerouslySetInnerHTML={{ __html: qr }}
+            />
             <div className="min-w-0">
-              <p className="text-[0.75rem] font-semibold tracking-[0.08em] text-graphite-500 uppercase">
+              <p className="text-[0.625rem] font-bold tracking-[0.1em] text-ink-800 uppercase">
                 Code de vérification
               </p>
-              <p className="mt-1 font-display text-[1.375rem] font-semibold tracking-[0.08em] text-ink-800 tabular-nums">
+              <p className="mt-0.5 font-display text-[1.25rem] leading-none font-semibold tracking-[0.06em] text-gold-600">
                 {code}
               </p>
-              <p className="mt-1.5 max-w-md text-[0.75rem] leading-relaxed text-graphite-600">
-                L’authenticité de ce document se vérifie en saisissant ce code sur{' '}
-                <span className="font-medium text-ink-800">{ADRESSE_VERIFICATION}</span>
-                . La page indique la date de délivrance et la formation concernée, sans divulguer
-                d’autre information.
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-[0.8125rem] text-graphite-600">Pour l’établissement,</p>
-              <p className="mt-8 border-t border-graphite-300 pt-1.5 text-[0.8125rem] font-semibold text-ink-800">
-                Le service des admissions
+              <p className="mt-2 text-[0.625rem] leading-relaxed text-graphite-600">
+                Visez le motif ci-contre, ou saisissez ce code sur{' '}
+                <span className="font-medium text-ink-800">{DOMAINE}/verifier</span>, pour contrôler
+                l’authenticité du présent document. Le partage de ce code est strictement réservé à
+                l’organisme destinataire.
               </p>
             </div>
           </div>
+
+          <div className="border-graphite-200 p-4 text-[0.75rem] sm:border-l">
+            <p className="text-graphite-600">Pour l’établissement,</p>
+            <p className="mt-8 border-t border-graphite-400 pt-1.5 font-semibold text-ink-800">
+              Le service des admissions
+            </p>
+          </div>
         </footer>
+
+        {/* L'adresse en clair : une photocopie en noir et blanc peut rendre le
+            motif illisible, et il faut alors pouvoir taper. */}
+        <p className="mt-2 text-center text-[0.5625rem] text-graphite-500">
+          {adresseVerification(code)}
+        </p>
       </article>
 
       <p className="mx-auto mt-4 max-w-[21cm] px-5 pb-8 text-[0.8125rem] text-graphite-500 print:hidden">
@@ -136,31 +196,65 @@ function ImprimerCeDocument() {
 }
 
 /* --------------------------------------------------------------------------
-   Un paragraphe de document, et une mention en deux colonnes.
+   Les pièces d'un document : paragraphe, intertitre, mentions, modalités.
    -------------------------------------------------------------------------- */
 
 export function Paragraphe({ children }: { children: React.ReactNode }) {
-  return <p className="mt-4 first:mt-0">{children}</p>;
+  return <p className="mt-3.5 first:mt-0">{children}</p>;
 }
 
+export function Intertitre({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="mt-7 text-[0.8125rem] font-bold tracking-[0.06em] text-ink-800 uppercase">
+      {children}
+    </h2>
+  );
+}
+
+/**
+ * Le tableau des mentions.
+ *
+ * Un acte administratif porte ses données dans un tableau, pas dans une
+ * phrase : c'est ce qui permet à un agent de guichet de trouver la ligne qu'il
+ * cherche sans lire le document. Les lignes alternent pour que l'œil ne saute
+ * pas d'une ligne à l'autre en suivant une colonne du doigt.
+ */
 export function Mentions({
   lignes,
 }: {
   lignes: readonly { readonly cle: string; readonly valeur: string }[];
 }) {
   return (
-    <dl className="mt-6 rounded-lg border border-graphite-200 bg-paper-tint px-5 py-4 print:bg-transparent">
-      {lignes.map((ligne) => (
-        <div
-          key={ligne.cle}
-          className="flex flex-wrap gap-x-4 gap-y-0.5 border-b border-graphite-100 py-2.5 last:border-0"
-        >
-          <dt className="w-full text-[0.8125rem] font-semibold text-graphite-600 sm:w-56 sm:shrink-0">
-            {ligne.cle}
-          </dt>
-          <dd className="min-w-0 flex-1 text-[0.9375rem] text-ink-800">{ligne.valeur}</dd>
-        </div>
+    <table className="mt-5 w-full border-collapse text-[0.8125rem]">
+      <tbody>
+        {lignes.map((ligne, rang) => (
+          <tr key={ligne.cle} className={rang % 2 === 0 ? 'bg-ink-50/70' : undefined}>
+            <th
+              scope="row"
+              className="w-[42%] border border-graphite-200 px-3 py-1.5 text-left font-semibold text-ink-800"
+            >
+              {ligne.cle}
+            </th>
+            <td className="border border-graphite-200 px-3 py-1.5 text-ink-700">{ligne.valeur}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+/** Les modalités : numérotées en or, parce qu'elles se suivent dans l'ordre. */
+export function Modalites({ etapes }: { etapes: readonly React.ReactNode[] }) {
+  return (
+    <ol className="mt-3 flex flex-col gap-1.5">
+      {etapes.map((etape, rang) => (
+        <li key={rang} className="flex gap-2.5">
+          <span className="shrink-0 font-display text-[0.8125rem] font-semibold text-gold-600">
+            {rang + 1}.
+          </span>
+          <span className="min-w-0">{etape}</span>
+        </li>
       ))}
-    </dl>
+    </ol>
   );
 }
