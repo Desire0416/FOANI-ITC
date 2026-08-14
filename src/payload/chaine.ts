@@ -265,6 +265,43 @@ export function enAlerte(cle: string | undefined, depuis: string | null | undefi
   return jours > seuil;
 }
 
+/* --------------------------------------------------------------------------
+   Le délai d'acceptation d'une offre — §7.1 et RG-45
+   --------------------------------------------------------------------------
+   « L'expiration du délai d'acceptation vaut désistement et libère la place. »
+
+   Quinze jours, arrêtés par l'établissement, conformément à la recommandation
+   du §7.1. Le nombre vit ici, et nulle part ailleurs.
+
+   La date limite est en revanche **enregistrée sur le dossier** au moment où
+   l'offre est faite, et non recalculée à la lecture. Une échéance annoncée à un
+   candidat dans sa lettre d'admission ne peut pas se déplacer parce que
+   l'établissement a changé son délai entre-temps.
+   -------------------------------------------------------------------------- */
+
+export const JOURS_ACCEPTATION = 15;
+
+/** Les états dans lesquels une offre court, et peut donc expirer. */
+export const ETATS_OFFRE_EN_COURS: readonly EtatChaine[] = ['admis', 'admis-condition'];
+
+export function limiteAcceptation(depuis: Date = new Date()): string {
+  const limite = new Date(depuis);
+  limite.setDate(limite.getDate() + JOURS_ACCEPTATION);
+  return limite.toISOString();
+}
+
+/** Le délai est-il dépassé ? */
+export function limiteDepassee(limite: string | null | undefined): boolean {
+  if (!limite) return false;
+  return new Date(limite).getTime() < Date.now();
+}
+
+/** Jours restants avant l'échéance. Négatif si elle est passée. */
+export function joursRestants(limite: string | null | undefined): number | null {
+  if (!limite) return null;
+  return Math.ceil((new Date(limite).getTime() - Date.now()) / 86_400_000);
+}
+
 /** Jours écoulés depuis la dernière action, arrondis à l'entier inférieur. */
 export function joursDepuis(depuis: string | null | undefined): number | null {
   if (!depuis) return null;

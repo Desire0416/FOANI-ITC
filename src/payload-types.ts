@@ -482,6 +482,10 @@ export interface Candidature {
       }[]
     | null;
   soumisLe?: string | null;
+  /**
+   * Posée au moment de la décision, quinze jours plus tard (§7.1). Elle ne se déplace plus : c’est la date annoncée au candidat dans sa lettre d’admission.
+   */
+  limiteAcceptation?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -863,6 +867,7 @@ export interface CandidaturesSelect<T extends boolean = true> {
         id?: T;
       };
   soumisLe?: T;
+  limiteAcceptation?: T;
   updatedAt?: T;
   createdAt?: T;
 }

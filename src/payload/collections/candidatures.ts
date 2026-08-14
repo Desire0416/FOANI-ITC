@@ -2,6 +2,7 @@ import type { CollectionConfig, Where } from 'payload';
 import { CYCLE_LABELS, FORMATIONS, titreComplet } from '@/content/formations';
 import { reserveA, siensOuRoles, suppressionInterdite } from '../acces';
 import { ROLES_CANDIDATURES } from '../roles';
+import { limiteAcceptation } from '../chaine';
 import { attribuerReference } from '../sequence';
 
 /* ==========================================================================
@@ -415,6 +416,19 @@ export const Candidatures: CollectionConfig = {
       label: 'Soumis le',
       admin: { position: 'sidebar', readOnly: true },
     },
+    {
+      name: 'limiteAcceptation',
+      type: 'date',
+      label: 'Date limite d’acceptation',
+      index: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        date: { pickerAppearance: 'dayOnly', displayFormat: 'dd/MM/yyyy' },
+        description:
+          'Posée au moment de la décision, quinze jours plus tard (§7.1). Elle ne se déplace plus : c’est la date annoncée au candidat dans sa lettre d’admission.',
+      },
+    },
   ],
   hooks: {
     /**
@@ -447,6 +461,17 @@ export const Candidatures: CollectionConfig = {
           data.decisionAgent = req.user.id;
         }
 
+        /* L'offre part avec sa date limite (RG-45). Elle est posée une seule
+           fois, à la première décision favorable : la lettre d'admission
+           l'annonce au candidat, et une échéance annoncée ne se déplace pas. */
+        const offreFaite =
+          (data.etat === 'admis' || data.etat === 'admis-condition') &&
+          originalDoc?.etat !== data.etat;
+
+        if (offreFaite && !originalDoc?.limiteAcceptation) {
+          data.limiteAcceptation = limiteAcceptation();
+        }
+
         // Chaque changement d'état laisse sa trace, avec son auteur et sa date.
         const etatChange =
           operation === 'update' &&
@@ -454,10 +479,15 @@ export const Candidatures: CollectionConfig = {
           data.etat !== originalDoc?.etat;
 
         if (etatChange) {
+          /* Un balayage d'échéance n'a pas de session : c'est le temps qui a
+             tranché, pas un agent. L'auteur est alors imposé par l'appelant,
+             pour que le journal ne l'attribue pas au candidat (RG-42). */
           const auteur =
-            req.user?.collection === 'utilisateurs'
-              ? String(req.user.nomComplet ?? req.user.email)
-              : 'Candidat';
+            typeof context?.auteurImpose === 'string' && context.auteurImpose
+              ? context.auteurImpose
+              : req.user?.collection === 'utilisateurs'
+                ? String(req.user.nomComplet ?? req.user.email)
+                : 'Candidat';
 
           /* Un retour en arrière porte son motif, une saisie faite pour le
              compte du candidat le dit (§5.5). Sans cela, l'historique

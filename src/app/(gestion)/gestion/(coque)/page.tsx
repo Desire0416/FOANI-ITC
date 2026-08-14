@@ -12,10 +12,11 @@ import { Anneau, Courbe, type PartAnneau, type PointSerie } from '@/components/g
 import { Carte, EnTetePage, Pastille, Tuile, Vide } from '@/components/gestion/ui';
 import { CYCLE_LABELS, getFormation, titreComplet } from '@/content/formations';
 import type { Cycle } from '@/content/types';
+import { Echeances } from '@/components/gestion/echeances';
 import { CadreDuPoste, FileAttente, type LigneFile } from '@/components/gestion/file-attente';
 import { Perimetre } from '@/components/gestion/perimetre';
 import { exigerAgent, socle } from '@/lib/session';
-import { enAlerte } from '@/payload/chaine';
+import { ETATS_OFFRE_EN_COURS, enAlerte } from '@/payload/chaine';
 import { posteDuRole } from '@/payload/postes';
 import { LIBELLES_ROLE, ROLES_DOSSIERS } from '@/payload/roles';
 
@@ -193,6 +194,7 @@ export default async function PageTableauDeBord() {
      place gelée ou une rentrée retardée. */
   lignesFile.sort((a, b) => Number(b.enAlerte) - Number(a.enAlerte));
 
+
   const compter = (where?: Record<string, unknown>) =>
     payload
       .count({ collection: 'candidatures', where: where as never, overrideAccess: true })
@@ -235,6 +237,22 @@ export default async function PageTableauDeBord() {
         compterPublications('brouillon'),
         compterPublications('a-valider'),
         compterPublications('publie'),
+      ])
+    : [0, 0, 0];
+
+  /* Échéances et places libérées — le poste Admission seul en a l'usage. */
+  const estAdmission = poste?.cle === 'admission';
+
+  const [offresExpirees, enListeAttente, placesLiberees] = estAdmission
+    ? await Promise.all([
+        compter({
+          and: [
+            { etat: { in: [...ETATS_OFFRE_EN_COURS] } },
+            { limiteAcceptation: { less_than: new Date().toISOString() } },
+          ],
+        }),
+        compter({ etat: { equals: 'attente' } }),
+        compter({ etat: { in: ['desiste', 'annule'] } }),
       ])
     : [0, 0, 0];
 
@@ -310,6 +328,14 @@ export default async function PageTableauDeBord() {
           c'est une liste de travail (§4.1). */}
       {poste && file.length > 0 ? (
         <FileAttente poste={poste} lignes={lignesFile} total={dossiersDeLaFile.totalDocs} />
+      ) : null}
+
+      {estAdmission ? (
+        <Echeances
+          expirees={offresExpirees}
+          enAttente={enListeAttente}
+          liberees={placesLiberees}
+        />
       ) : null}
 
       {/* Ce que le poste fait, consulte, et ne touche pas. */}
