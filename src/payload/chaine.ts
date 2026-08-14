@@ -271,6 +271,218 @@ export function joursDepuis(depuis: string | null | undefined): number | null {
   return Math.floor((Date.now() - new Date(depuis).getTime()) / 86_400_000);
 }
 
+/* ==========================================================================
+   Les transitions permises — RG-41 et RG-43
+   --------------------------------------------------------------------------
+   « Un dossier ne peut passer à l'état suivant que si l'action attendue de son
+   service propriétaire a été accomplie. » (RG-41)
+   « Un retour en arrière est possible mais toujours motivé, et demeure visible
+   dans l'historique. » (RG-43)
+
+   Deux règles que rien ne tenait jusqu'ici : l'action d'avancement acceptait
+   n'importe quel état, y compris un saut d'étape ou un retour silencieux.
+   Décrire les transitions permises est ce qui rend la chaîne étanche — et ce
+   qui permet à chaque poste de n'afficher que les gestes qui lui reviennent.
+
+   Ne figurent ici que les transitions faites par un agent. Celles qui
+   reviennent au candidat — accepter son offre, annoncer son versement, déposer
+   son dossier d'inscription — s'effectuent depuis son espace. Un agent peut
+   néanmoins les accomplir pour son compte : le §5.5 prévoit ce mode assisté
+   pour qui ne dispose pas d'un équipement adapté, et l'intervention est alors
+   tracée comme telle.
+   ========================================================================== */
+
+export type Transition = {
+  readonly vers: EtatChaine;
+  readonly libelle: string;
+  readonly aide: string;
+  /** Le service habilité à l'accomplir. */
+  readonly par: Service;
+  /** Retour en arrière : exige un motif (RG-43). */
+  readonly recule?: true;
+  /** Geste normalement fait par le candidat, ici en mode assisté (§5.5). */
+  readonly assiste?: true;
+};
+
+export const TRANSITIONS: Partial<Record<EtatChaine, readonly Transition[]>> = {
+  soumis: [
+    {
+      vers: 'instruction',
+      libelle: 'Prendre en instruction',
+      aide: 'Le dossier passe sous votre examen.',
+      par: 'admission',
+    },
+    {
+      vers: 'complement',
+      libelle: 'Demander un complément',
+      aide: 'La main repasse au candidat, qui peut modifier son dossier.',
+      par: 'admission',
+    },
+    {
+      vers: 'complet',
+      libelle: 'Marquer complet',
+      aide: 'Pièces validées, en attente de décision.',
+      par: 'admission',
+    },
+  ],
+
+  instruction: [
+    {
+      vers: 'complement',
+      libelle: 'Demander un complément',
+      aide: 'La main repasse au candidat.',
+      par: 'admission',
+    },
+    {
+      vers: 'complet',
+      libelle: 'Marquer complet',
+      aide: 'Pièces validées, en attente de décision.',
+      par: 'admission',
+    },
+  ],
+
+  complement: [
+    {
+      vers: 'instruction',
+      libelle: 'Reprendre l’instruction',
+      aide: 'Le candidat a fourni ce qui manquait.',
+      par: 'admission',
+    },
+  ],
+
+  complet: [
+    {
+      vers: 'instruction',
+      libelle: 'Rouvrir l’instruction',
+      aide: 'Revient sur la complétude déclarée.',
+      par: 'admission',
+      recule: true,
+    },
+  ],
+
+  admis: [
+    {
+      vers: 'offre-acceptee',
+      libelle: 'Enregistrer l’acceptation',
+      aide: 'Pour un candidat qui accepte par téléphone ou au guichet.',
+      par: 'admission',
+      assiste: true,
+    },
+    {
+      vers: 'desiste',
+      libelle: 'Constater le désistement',
+      aide: 'Refus explicite, ou délai d’acceptation expiré. La place est libérée.',
+      par: 'admission',
+    },
+  ],
+
+  'admis-condition': [
+    {
+      vers: 'offre-acceptee',
+      libelle: 'Enregistrer l’acceptation',
+      aide: 'Les conditions étant levées.',
+      par: 'admission',
+      assiste: true,
+    },
+    {
+      vers: 'desiste',
+      libelle: 'Constater le désistement',
+      aide: 'Refus explicite, ou délai expiré.',
+      par: 'admission',
+    },
+  ],
+
+  attente: [
+    {
+      vers: 'complet',
+      libelle: 'Reprendre le dossier',
+      aide: 'Une place s’est libérée : le dossier retourne en décision.',
+      par: 'admission',
+    },
+  ],
+
+  'offre-acceptee': [
+    {
+      vers: 'place-reservee',
+      libelle: 'Constater le versement',
+      aide: 'Versement reçu au guichet, ou déjà rapproché du relevé.',
+      par: 'finances',
+    },
+  ],
+
+  'versement-annonce': [
+    {
+      vers: 'place-reservee',
+      libelle: 'Constater le versement',
+      aide: 'La référence concorde avec le relevé : la place est réservée.',
+      par: 'finances',
+    },
+    {
+      vers: 'offre-acceptee',
+      libelle: 'Signaler un écart',
+      aide: 'La référence ne concorde pas. Le candidat est invité à la corriger.',
+      par: 'finances',
+      recule: true,
+    },
+  ],
+
+  'place-reservee': [
+    {
+      vers: 'inscription-a-valider',
+      libelle: 'Transmettre à la scolarité',
+      aide: 'Dossier d’inscription complété pour le compte du candidat.',
+      par: 'scolarite',
+      assiste: true,
+    },
+    {
+      vers: 'annule',
+      libelle: 'Enregistrer une annulation',
+      aide: 'Renoncement après réservation, selon les conditions d’annulation.',
+      par: 'finances',
+    },
+  ],
+
+  'inscription-a-valider': [
+    {
+      vers: 'inscrit',
+      libelle: 'Valider l’inscription',
+      aide: 'Le numéro étudiant est attribué et l’inscription créée.',
+      par: 'scolarite',
+    },
+    {
+      vers: 'place-reservee',
+      libelle: 'Demander une pièce complémentaire',
+      aide: 'Sans rejeter le dossier : la main repasse au candidat.',
+      par: 'scolarite',
+      recule: true,
+    },
+  ],
+
+  inscrit: [
+    {
+      vers: 'acces-ouverts',
+      libelle: 'Ouvrir les accès',
+      aide: 'Comptes créés, étudiant rattaché aux cours de sa formation.',
+      par: 'pedagogie',
+    },
+  ],
+};
+
+/** La transition demandée existe-t-elle ? (RG-41 — pas de saut d'étape.) */
+export function transition(de: string | undefined, vers: string): Transition | null {
+  const permises = TRANSITIONS[(de ?? '') as EtatChaine] ?? [];
+  return permises.find((item) => item.vers === vers) ?? null;
+}
+
+/** Les transitions qu'un service donné peut accomplir depuis cet état. */
+export function transitionsDuService(
+  de: string | undefined,
+  service: Service | null,
+): readonly Transition[] {
+  if (!service) return [];
+  return (TRANSITIONS[(de ?? '') as EtatChaine] ?? []).filter((item) => item.par === service);
+}
+
 /* --------------------------------------------------------------------------
    Quel rôle tient quel service
    --------------------------------------------------------------------------

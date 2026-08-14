@@ -6,6 +6,7 @@ import { getPayload } from 'payload';
 import config from '@payload-config';
 import { etat as lireEtat } from '@/lib/etats';
 import type { Candidature } from '@/payload-types';
+import { serviceDuRole, transition as lireTransition } from '../chaine';
 import { ROLES_DECISION, ROLES_INSTRUCTION, ROLES_VERSEMENTS, type Role } from '../roles';
 
 /* ==========================================================================
@@ -65,10 +66,68 @@ function rafraichir(id: string) {
  *  inventé ne compile pas. */
 export type EtatInstruction = NonNullable<Candidature['etat']>;
 
-/** Fait avancer l'état du dossier. Le journal est écrit par la collection. */
-export async function changerEtat(id: string, nouvelEtat: EtatInstruction): Promise<Retour> {
+/**
+ * Fait avancer un dossier le long de la chaîne.
+ *
+ * Trois contrôles, qu'aucune version précédente ne faisait :
+ *
+ * — la transition demandée doit exister (RG-41). L'action acceptait auparavant
+ *   n'importe quel état, y compris un saut d'étape ;
+ * — elle doit revenir au service de l'agent. Un chargé d'admission ne valide
+ *   pas une inscription, la scolarité ne constate pas un versement ;
+ * — un retour en arrière exige un motif (RG-43), qui rejoint le journal.
+ *
+ * L'état visé n'est pas relu depuis le navigateur : il est comparé à l'état
+ * réel du dossier, lu en base au moment de l'action.
+ */
+export async function changerEtat(
+  id: string,
+  nouvelEtat: EtatInstruction,
+  motif = '',
+): Promise<Retour> {
   const { payload, user } = await contexte();
-  if (!habilite(user, ROLES_INSTRUCTION)) return { ok: false, message: REFUS.instruction };
+
+  const agent = user as { collection?: string; role?: Role; actif?: boolean } | null;
+  if (agent?.collection !== 'utilisateurs' || agent.actif === false || !agent.role) {
+    return { ok: false, message: REFUS.instruction };
+  }
+
+  let courant: string;
+  try {
+    const dossier = await payload.findByID({
+      collection: 'candidatures',
+      id,
+      depth: 0,
+      overrideAccess: true,
+    });
+    courant = String((dossier as { etat?: string }).etat ?? '');
+  } catch {
+    return { ok: false, message: 'Ce dossier est introuvable.' };
+  }
+
+  const permise = lireTransition(courant, nouvelEtat);
+  if (!permise) {
+    return {
+      ok: false,
+      message: `Un dossier « ${lireEtat(courant).libelle} » ne peut pas passer directement à « ${lireEtat(nouvelEtat).libelle} ».`,
+    };
+  }
+
+  const service = serviceDuRole(agent.role);
+  const toutPuissant = agent.role === 'administrateur';
+  if (!toutPuissant && service !== permise.par) {
+    return {
+      ok: false,
+      message: `Ce geste revient au service ${permise.par}. Votre poste ne le permet pas.`,
+    };
+  }
+
+  if (permise.recule && motif.trim().length < 3) {
+    return {
+      ok: false,
+      message: 'Un retour en arrière demande un motif : il restera visible dans l’historique.',
+    };
+  }
 
   try {
     await payload.update({
@@ -77,6 +136,13 @@ export async function changerEtat(id: string, nouvelEtat: EtatInstruction): Prom
       data: { etat: nouvelEtat },
       user,
       overrideAccess: false,
+      /* Le motif ne rejoint pas un champ du dossier mais son journal : le
+         RG-43 veut qu'il « demeure visible dans l'historique », et un champ
+         serait écrasé au retour suivant. */
+      context: {
+        motifTransition: motif.trim(),
+        transitionAssistee: permise.assiste === true,
+      },
     });
     rafraichir(id);
     return { ok: true, message: `Dossier passé à « ${lireEtat(nouvelEtat).libelle} ».` };

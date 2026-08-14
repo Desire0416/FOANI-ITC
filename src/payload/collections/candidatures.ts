@@ -434,7 +434,7 @@ export const Candidatures: CollectionConfig = {
      * que demande le §10.3.
      */
     beforeChange: [
-      async ({ data, operation, req, originalDoc }) => {
+      async ({ data, operation, req, originalDoc, context }) => {
         // Numéro de dossier attribué une seule fois, à la création.
         if (operation === 'create' && !data.reference) {
           data.reference = await attribuerReference(req.payload, 'candidature');
@@ -459,11 +459,23 @@ export const Candidatures: CollectionConfig = {
               ? String(req.user.nomComplet ?? req.user.email)
               : 'Candidat';
 
+          /* Un retour en arrière porte son motif, une saisie faite pour le
+             compte du candidat le dit (§5.5). Sans cela, l'historique
+             montrerait un aller-retour sans jamais en donner la raison. */
+          const motif = typeof context?.motifTransition === 'string' ? context.motifTransition : '';
+          const assistee = context?.transitionAssistee === true;
+
+          const mentions = [
+            `État : ${originalDoc?.etat ?? '—'} → ${data.etat}`,
+            assistee ? 'saisi pour le compte du candidat' : '',
+            motif ? `motif : ${motif}` : '',
+          ].filter(Boolean);
+
           data.journal = [
             ...((originalDoc?.journal as unknown[] | undefined) ?? []),
             {
               date: new Date().toISOString(),
-              action: `État : ${originalDoc?.etat ?? '—'} → ${data.etat}`,
+              action: mentions.join(' — '),
               auteur,
             },
           ];

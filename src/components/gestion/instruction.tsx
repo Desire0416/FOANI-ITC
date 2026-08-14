@@ -11,6 +11,12 @@ import {
   type EtatInstruction,
   type Retour,
 } from '@/payload/actions/candidatures';
+import {
+  LIBELLES_SERVICE,
+  etape as lireEtape,
+  transitionsDuService,
+  type Service,
+} from '@/payload/chaine';
 import { DECISIONS } from '@/lib/etats';
 import { cn } from '@/lib/utils';
 
@@ -231,43 +237,122 @@ export function PiecesDuDossier({
 export function AvancementDossier({
   id,
   etatCourant,
-  modifiable,
+  service,
 }: {
   id: string;
   etatCourant: string;
-  modifiable: boolean;
+  /** Le service que tient l'agent. Il décide des gestes proposés. */
+  service: Service | null;
 }) {
   const { retour, setRetour, enCours, executer } = useCommande();
+  const [motifs, setMotifs] = useState<Record<string, string>>({});
+  const [ouvert, setOuvert] = useState<string | null>(null);
 
-  const etapes: readonly { cle: EtatInstruction; libelle: string; aide: string }[] = [
-    { cle: 'instruction', libelle: 'Prendre en instruction', aide: 'Le dossier passe sous votre examen.' },
-    { cle: 'complement', libelle: 'Demander un complément', aide: 'La main repasse au candidat, qui peut modifier son dossier.' },
-    { cle: 'complet', libelle: 'Marquer complet', aide: 'Pièces validées, en attente de décision.' },
-  ];
+  const gestes = transitionsDuService(etatCourant, service);
+  const etapeCourante = lireEtape(etatCourant);
 
-  if (!modifiable) {
-    return <Reserve acte="Faire avancer un dossier" service="service des admissions" />;
+  /* Un dossier qui n'attend pas ce service ne lui propose rien — mais on dit
+     à qui il appartient, plutôt que de laisser un panneau muet. */
+  if (gestes.length === 0) {
+    const detenteur = etapeCourante?.proprietaire;
+    if (!detenteur || detenteur === service) {
+      return (
+        <p className="rounded-xl border border-dashed border-graphite-200 bg-paper-tint px-4 py-5 text-[0.875rem] leading-relaxed text-graphite-500">
+          {etapeCourante?.terminal
+            ? 'Ce dossier a atteint un état terminal : il ne bouge plus.'
+            : 'Aucun geste n’est attendu de votre poste à ce stade.'}
+        </p>
+      );
+    }
+    return (
+      <Reserve
+        acte="Faire avancer ce dossier"
+        service={detenteur === 'candidat' ? 'candidat lui-même' : `service ${LIBELLES_SERVICE[detenteur]}`}
+      />
+    );
   }
 
   return (
     <>
+      {/* Ce que le dossier attend, avant les boutons : sans cela, l'agent
+          choisit un geste sans savoir où il en est. */}
+      {etapeCourante?.attendu ? (
+        <p className="mb-4 rounded-xl border border-ink-100 bg-ink-50 px-3.5 py-3 text-[0.8125rem] leading-relaxed text-ink-800">
+          {etapeCourante.attendu}
+        </p>
+      ) : null}
+
       <ul className="flex flex-col gap-2">
-        {etapes.map((etape) => (
-          <li key={etape.cle}>
+        {gestes.map((geste) => (
+          <li key={geste.vers}>
             <button
               type="button"
-              disabled={enCours || etatCourant === etape.cle}
-              onClick={() => executer(() => changerEtat(id, etape.cle))}
-              className={cn(
-                'w-full rounded-xl border px-4 py-3 text-left transition-colors disabled:opacity-45',
-                etatCourant === etape.cle
-                  ? 'cursor-default border-ink-200 bg-ink-50'
-                  : 'border-graphite-200 bg-paper hover:border-ink-300 hover:bg-ink-50',
-              )}
+              disabled={enCours}
+              onClick={() => {
+                if (geste.recule) {
+                  setOuvert(ouvert === geste.vers ? null : geste.vers);
+                  return;
+                }
+                executer(() => changerEtat(id, geste.vers as EtatInstruction, motifs[geste.vers] ?? ''));
+              }}
+              className="w-full rounded-xl border border-graphite-200 bg-paper px-4 py-3 text-left transition-colors hover:border-ink-300 hover:bg-ink-50 disabled:opacity-55"
             >
-              <span className="block text-[0.875rem] font-semibold text-ink-800">{etape.libelle}</span>
-              <span className="mt-0.5 block text-[0.75rem] leading-snug text-graphite-500">{etape.aide}</span>
+              <span className="flex items-center gap-2 text-[0.875rem] font-semibold text-ink-800">
+                {geste.libelle}
+                {geste.recule ? (
+                  <span className="pastille bg-gold-50 text-gold-700">motif requis</span>
+                ) : null}
+                {geste.assiste ? (
+                  <span className="pastille bg-graphite-100 text-graphite-600">mode assisté</span>
+                ) : null}
+              </span>
+              <span className="mt-1 block text-[0.8125rem] leading-snug text-graphite-500">
+                {geste.aide}
+              </span>
             </button>
+
+            {ouvert === geste.vers ? (
+              <div className="mt-2 rounded-xl border border-graphite-200 bg-paper p-3">
+                <label htmlFor={`motif-etat-${geste.vers}`} className="etiquette">
+                  Motif du retour
+                </label>
+                <p className="mb-2 text-[0.8125rem] leading-snug text-graphite-500">
+                  Il demeure visible dans l’historique du dossier. Soyez précis : c’est lui qui
+                  rendra la décision compréhensible dans six mois.
+                </p>
+                <textarea
+                  id={`motif-etat-${geste.vers}`}
+                  rows={2}
+                  value={motifs[geste.vers] ?? ''}
+                  onChange={(evenement) =>
+                    setMotifs((avant) => ({ ...avant, [geste.vers]: evenement.target.value }))
+                  }
+                  className="champ"
+                />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    disabled={enCours}
+                    onClick={() => {
+                      executer(() =>
+                        changerEtat(id, geste.vers as EtatInstruction, motifs[geste.vers] ?? ''),
+                      );
+                      setOuvert(null);
+                    }}
+                    className="bouton bouton--principal h-9 px-4 text-[0.8125rem]"
+                  >
+                    Enregistrer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOuvert(null)}
+                    className="bouton bouton--discret h-9 px-3 text-[0.8125rem]"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </li>
         ))}
       </ul>

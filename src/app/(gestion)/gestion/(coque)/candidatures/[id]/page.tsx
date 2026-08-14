@@ -13,6 +13,7 @@ import {
 import { CYCLE_LABELS, getFormation, titreComplet } from '@/content/formations';
 import { etat as lireEtat, formatDate } from '@/lib/etats';
 import { exigerRole, socle } from '@/lib/session';
+import { serviceDuRole } from '@/payload/chaine';
 import {
   ROLES_DECISION,
   ROLES_DOSSIERS,
@@ -215,7 +216,13 @@ export default async function PageDossier({ params }: Params) {
         {/* ------------------------------------------------------ Commandes */}
         <div className="flex flex-col gap-5">
           <Carte titre="Avancement">
-            <AvancementDossier id={id} etatCourant={valeur('etat') ?? ''} modifiable={peutInstruire} />
+            {/* Le panneau ne reçoit plus un droit mais un service : il lit la
+                chaîne et n'affiche que les gestes qui reviennent à ce poste. */}
+            <AvancementDossier
+              id={id}
+              etatCourant={valeur('etat') ?? ''}
+              service={serviceDuRole(agent.role)}
+            />
           </Carte>
 
           <Carte titre="Frais de dossier">
