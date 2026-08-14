@@ -444,6 +444,87 @@ export const CHAMPS_INSCRIPTION: Field = {
           ],
         },
 
+        /* ------------------------------------------ Vérification d'identité */
+        {
+          type: 'collapsible',
+          label: 'Vérification d’identité',
+          fields: [
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'pieceRecto',
+                  type: 'upload',
+                  relationTo: 'pieces',
+                  label: 'Pièce d’identité — recto',
+                  admin: { width: '33%' },
+                },
+                {
+                  name: 'pieceVerso',
+                  type: 'upload',
+                  relationTo: 'pieces',
+                  label: 'Pièce d’identité — verso',
+                  admin: { width: '33%' },
+                },
+                {
+                  /* La photographie du candidat tenant sa pièce. Elle ne
+                     remplace pas le contrôle de l'agent : elle le rend
+                     possible à distance, en liant le porteur au document. */
+                  name: 'pieceSelfie',
+                  type: 'upload',
+                  relationTo: 'pieces',
+                  label: 'Le candidat tenant sa pièce',
+                  admin: { width: '34%' },
+                },
+              ],
+            },
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'identiteControle',
+                  type: 'select',
+                  label: 'Contrôle visuel',
+                  defaultValue: 'attente',
+                  options: [
+                    { value: 'attente', label: 'En attente de contrôle' },
+                    { value: 'conforme', label: 'Identité vérifiée' },
+                    { value: 'a-revoir', label: 'À reprendre' },
+                  ],
+                  admin: { width: '34%' },
+                },
+                {
+                  name: 'identiteMotif',
+                  type: 'text',
+                  label: 'Motif, si à reprendre',
+                  admin: { width: '66%' },
+                },
+              ],
+            },
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'identiteControleeLe',
+                  type: 'date',
+                  label: 'Contrôlée le',
+                  admin: { width: '50%', readOnly: true },
+                },
+                {
+                  /* §5.4 : « Chaque validation de pièce porte le nom de
+                     l'agent et la date. Un dossier frauduleux passé au travers
+                     reste imputable. » */
+                  name: 'identiteControleePar',
+                  type: 'relationship',
+                  relationTo: 'utilisateurs',
+                  label: 'Contrôlée par',
+                  admin: { width: '50%', readOnly: true },
+                },
+              ],
+            },
+          ],
+        },
+
         /* ------------------------------------------------------- Achèvement */
         {
           name: 'inscriptionCompleteeLe',

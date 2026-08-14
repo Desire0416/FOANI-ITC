@@ -18,8 +18,11 @@ import {
   ROLES_DECISION,
   ROLES_DOSSIERS,
   ROLES_INSTRUCTION,
+  ROLES_SCOLARITE_IDENTITE,
   ROLES_VERSEMENTS,
 } from '@/payload/roles';
+import { dossiersPartageant } from '@/payload/empreintes';
+import { ControleIdentite } from '@/components/gestion/identite';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -34,6 +37,13 @@ const NATURES: Record<string, string> = {
   diplome: 'Diplôme ou attestation',
   photo: 'Photographie d’identité',
   autre: 'Autre document',
+};
+
+const PIECES_IDENTITE: Record<string, string> = {
+  cni: 'Carte nationale d’identité',
+  attestation: 'Attestation d’identité',
+  passeport: 'Passeport',
+  sejour: 'Titre de séjour',
 };
 
 const MODES: Record<string, string> = {
@@ -115,6 +125,74 @@ export default async function PageDossier({ params }: Params) {
     ['Son téléphone', valeur('contactTelephone')],
   ] as const;
 
+  /* ------------------------------------------------ Vérification d'identité */
+  const brut = dossier as unknown as Record<string, unknown>;
+
+  function cliche(champ: string, titre: string) {
+    const valeurChamp = brut[champ];
+    const objet =
+      valeurChamp && typeof valeurChamp === 'object'
+        ? (valeurChamp as { id?: string | number; url?: string | null; empreinte?: string | null })
+        : null;
+    return {
+      cle: champ,
+      titre,
+      id: objet?.id ?? null,
+      apercu: objet?.url ?? null,
+      empreinte: objet?.empreinte ?? null,
+    };
+  }
+
+  const cliches = [
+    cliche('pieceRecto', 'Recto'),
+    cliche('pieceVerso', 'Verso'),
+    cliche('pieceSelfie', 'Le porteur'),
+  ];
+
+  const verdictIdentite = String(brut.identiteControle ?? 'attente');
+  const identiteOuverte = cliches.some((item) => item.id) || verdictIdentite !== 'attente';
+  const peutControlerIdentite = ROLES_SCOLARITE_IDENTITE.includes(agent.role);
+
+  /* Le rapprochement d'empreintes (§5.4) : un même fichier dans deux dossiers.
+     Il n'est calculé que si l'écran l'affiche — c'est une requête de plus. */
+  const jumeaux = identiteOuverte
+    ? (
+        await Promise.all(
+          cliches
+            .filter((item) => item.empreinte)
+            .map((item) => dossiersPartageant(payload, item.empreinte!, dossier.id as string | number)),
+        )
+      )
+        .flat()
+        .filter(
+          (jumeau, rang, tous) =>
+            tous.findIndex((autre) => String(autre.dossierId) === String(jumeau.dossierId)) === rang,
+        )
+    : [];
+
+  const declareIdentite = [
+    { cle: 'Nom sur l’acte', valeur: (brut.nomActe as string | null) ?? null },
+    { cle: 'Prénoms sur l’acte', valeur: (brut.prenomsActe as string | null) ?? null },
+    {
+      cle: 'Date de naissance',
+      valeur: dossier.dateNaissance ? formatDate(String(dossier.dateNaissance)) : null,
+    },
+    { cle: 'Lieu de naissance', valeur: (brut.lieuNaissanceActe as string | null) ?? null },
+    {
+      cle: 'Nature de la pièce',
+      valeur: PIECES_IDENTITE[String(brut.naturePieceIdentite ?? '')] ?? null,
+    },
+    { cle: 'Numéro de la pièce', valeur: (brut.numeroPieceIdentite as string | null) ?? null },
+  ];
+
+  const controleur = brut.identiteControleePar;
+  const agentControle =
+    controleur && typeof controleur === 'object'
+      ? ((controleur as { nomComplet?: string; email?: string }).nomComplet ??
+        (controleur as { email?: string }).email ??
+        null)
+      : null;
+
   return (
     <div className="flex flex-col gap-6">
       {/* ----------------------------------------------------------- Bandeau */}
@@ -189,6 +267,33 @@ export default async function PageDossier({ params }: Params) {
           >
             <PiecesDuDossier id={id} pieces={pieces} modifiable={peutInstruire} />
           </Carte>
+
+          {/* Vérification d'identité — n'apparaît que si le candidat a
+              commencé à déposer, ou si la scolarité a déjà tranché. */}
+          {identiteOuverte ? (
+            <Carte
+              titre="Vérification d’identité"
+              mention={
+                verdictIdentite === 'conforme'
+                  ? 'Vérifiée'
+                  : verdictIdentite === 'a-revoir'
+                    ? 'Reprise demandée'
+                    : 'En attente de contrôle'
+              }
+            >
+              <ControleIdentite
+                id={id}
+                cliches={cliches}
+                declare={declareIdentite}
+                jumeaux={jumeaux}
+                verdict={verdictIdentite}
+                motifExistant={(brut.identiteMotif as string | null) ?? null}
+                controleLe={(brut.identiteControleeLe as string | null) ?? null}
+                controlePar={agentControle}
+                autorise={peutControlerIdentite}
+              />
+            </Carte>
+          ) : null}
 
           <Carte titre="Journal du dossier">
             {journal.length === 0 ? (

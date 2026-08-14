@@ -69,6 +69,29 @@ export const Pieces: CollectionConfig = {
       },
     },
     {
+      /* Empreinte technique du fichier — Note complémentaire §5.4.
+         « Le dispositif détecte le dépôt d'un même document dans deux dossiers
+         distincts, par comparaison d'empreinte technique. » Et §5.4 encore :
+         « Les pièces déposées sont conservées telles quelles, avec leur date de
+         dépôt et leur empreinte, ce qui rend toute contestation ultérieure
+         arbitrable. »
+
+         Elle n'est pas unique en base, délibérément. Un même document déposé
+         deux fois est un fait à signaler à un agent, pas une écriture à
+         refuser : deux frères peuvent produire le même certificat de résidence,
+         et un candidat peut légitimement redéposer le sien après un rejet. Le
+         dispositif rapproche ; c'est l'agent qui tranche. */
+      name: 'empreinte',
+      type: 'text',
+      label: 'Empreinte du fichier',
+      index: true,
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'SHA-256 du fichier tel que déposé. Sert à repérer un même document dans deux dossiers.',
+      },
+    },
+    {
       name: 'nature',
       type: 'select',
       label: 'Nature du document',

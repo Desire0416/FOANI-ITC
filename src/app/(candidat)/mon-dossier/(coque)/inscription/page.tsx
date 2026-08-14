@@ -31,12 +31,6 @@ export const metadata: Metadata = { title: 'Mon inscription' };
 
 const A_VENIR = [
   {
-    numero: 6,
-    titre: 'Vérification de votre identité',
-    corps:
-      'Vous photographierez votre pièce d’identité recto et verso, puis vous-même la tenant. Le service de la scolarité procédera au contrôle visuel.',
-  },
-  {
     numero: 7,
     titre: 'Signature de vos engagements',
     corps:
@@ -62,7 +56,7 @@ export default async function SommaireInscription() {
         titre={complet ? 'Votre dossier d’inscription est complet' : 'Votre dossier d’inscription'}
         resume={
           complet
-            ? 'Il ne reste qu’à vérifier votre identité et à signer vos engagements. Ces deux étapes ouvriront dans cet espace.'
+            ? 'Il ne reste qu’à signer vos engagements. Cette étape ouvrira dans cet espace.'
             : 'Complétez les informations que votre candidature ne recueillait pas. Tout est enregistré au fur et à mesure.'
         }
         actions={
@@ -131,8 +125,8 @@ export default async function SommaireInscription() {
         </header>
         <div className="p-5 sm:p-6">
           <p className="text-[0.9375rem] leading-relaxed text-graphite-600">
-            Votre inscription ne sera soumise à la scolarité qu’une fois ces deux étapes
-            accomplies. Elles ouvriront dans cet espace&nbsp;; nous vous préviendrons.
+            Votre inscription ne sera soumise à la scolarité qu’une fois cette étape accomplie.
+            Elle ouvrira dans cet espace&nbsp;; nous vous préviendrons.
           </p>
           <ul className="mt-5 flex flex-col gap-4">
             {A_VENIR.map((etape) => (
@@ -179,6 +173,19 @@ export default async function SommaireInscription() {
               intitule="À prévenir"
               valeur={d.urgenceNom}
               href={ouvert ? '/mon-dossier/inscription/urgence' : undefined}
+            />
+            <Ligne
+              intitule="Pièce d’identité"
+              valeur={
+                d.identiteControle === 'conforme'
+                  ? 'Vérifiée par la scolarité'
+                  : d.identiteControle === 'a-revoir'
+                    ? 'À reprendre'
+                    : d.pieceRecto && d.pieceVerso && d.pieceSelfie
+                      ? 'Déposée, en attente de contrôle'
+                      : null
+              }
+              href={ouvert ? '/mon-dossier/inscription/piece-identite' : undefined}
             />
           </dl>
         </Carte>

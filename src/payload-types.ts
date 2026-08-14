@@ -298,6 +298,10 @@ export interface Personne {
 export interface Piece {
   id: number;
   deposePar?: (number | null) | Candidat;
+  /**
+   * SHA-256 du fichier tel que déposé. Sert à repérer un même document dans deux dossiers.
+   */
+  empreinte?: string | null;
   nature?: ('identite' | 'releve' | 'diplome' | 'photo' | 'autre') | null;
   /**
    * §20.2 — chaque accès à une pièce est enregistré.
@@ -530,6 +534,13 @@ export interface Candidature {
    * Horodatage du consentement à l’impression de la photographie sur la carte.
    */
   photoConsentieLe?: string | null;
+  pieceRecto?: (number | null) | Piece;
+  pieceVerso?: (number | null) | Piece;
+  pieceSelfie?: (number | null) | Piece;
+  identiteControle?: ('attente' | 'conforme' | 'a-revoir') | null;
+  identiteMotif?: string | null;
+  identiteControleeLe?: string | null;
+  identiteControleePar?: (number | null) | Utilisateur;
   inscriptionCompleteeLe?: string | null;
   /**
    * §10.3 — conserve l’auteur et la date de chaque décision.
@@ -1002,6 +1013,13 @@ export interface CandidaturesSelect<T extends boolean = true> {
   urgenceQuartier?: T;
   photo?: T;
   photoConsentieLe?: T;
+  pieceRecto?: T;
+  pieceVerso?: T;
+  pieceSelfie?: T;
+  identiteControle?: T;
+  identiteMotif?: T;
+  identiteControleeLe?: T;
+  identiteControleePar?: T;
   inscriptionCompleteeLe?: T;
   journal?:
     | T
@@ -1026,6 +1044,7 @@ export interface CandidaturesSelect<T extends boolean = true> {
  */
 export interface PiecesSelect<T extends boolean = true> {
   deposePar?: T;
+  empreinte?: T;
   nature?: T;
   consultations?:
     | T

@@ -7,7 +7,13 @@ import config from '@payload-config';
 import { etat as lireEtat } from '@/lib/etats';
 import type { Candidature } from '@/payload-types';
 import { serviceDuRole, transition as lireTransition } from '../chaine';
-import { ROLES_DECISION, ROLES_INSTRUCTION, ROLES_VERSEMENTS, type Role } from '../roles';
+import {
+  ROLES_DECISION,
+  ROLES_INSTRUCTION,
+  ROLES_SCOLARITE_IDENTITE,
+  ROLES_VERSEMENTS,
+  type Role,
+} from '../roles';
 
 /* ==========================================================================
    Instruction d'une candidature — CDC §10.3
@@ -195,6 +201,65 @@ export async function deciderPiece(
     };
   } catch {
     return { ok: false, message: 'La décision sur la pièce n’a pas pu être enregistrée.' };
+  }
+}
+
+/**
+ * Statue sur la vérification d'identité — Note complémentaire §5.1, étape 5.
+ *
+ * « Le service Scolarité procède au contrôle visuel. » Et §5.4 : « Chaque
+ * validation de pièce porte le nom de l'agent et la date. Un dossier
+ * frauduleux passé au travers reste imputable. »
+ *
+ * Le contrôle appartient à la scolarité, pas à l'admission : c'est la
+ * séparation posée au §4.8 — « qui décide de l'admission ne valide pas
+ * l'inscription », et « deux regards successifs sur un même dossier, dont
+ * l'un porte spécifiquement sur les pièces ».
+ */
+export async function controlerIdentite(
+  id: string,
+  verdict: 'conforme' | 'a-revoir',
+  motif: string,
+): Promise<Retour> {
+  const { payload, user } = await contexte();
+  if (!habilite(user, ROLES_SCOLARITE_IDENTITE)) {
+    return {
+      ok: false,
+      message:
+        'Le contrôle d’identité relève du service de la scolarité : c’est le second regard que le dispositif impose sur un dossier.',
+    };
+  }
+
+  if (verdict === 'a-revoir' && motif.trim().length < 3) {
+    return {
+      ok: false,
+      message: 'Une demande de reprise exige un motif : le candidat doit savoir quoi refaire.',
+    };
+  }
+
+  try {
+    await payload.update({
+      collection: 'candidatures',
+      id,
+      data: {
+        identiteControle: verdict,
+        identiteMotif: verdict === 'a-revoir' ? motif.trim() : null,
+        identiteControleeLe: new Date().toISOString(),
+        identiteControleePar: (user as { id?: number })?.id ?? null,
+      } as never,
+      user,
+      overrideAccess: false,
+    });
+    rafraichir(id);
+    return {
+      ok: true,
+      message:
+        verdict === 'conforme'
+          ? 'Identité vérifiée. Le contrôle porte votre nom et sa date.'
+          : 'Reprise demandée. Le candidat voit le motif dans son espace.',
+    };
+  } catch {
+    return { ok: false, message: 'Le contrôle n’a pas pu être enregistré.' };
   }
 }
 

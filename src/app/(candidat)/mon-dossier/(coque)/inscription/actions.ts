@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import { candidatConnecte, dossierCourant } from '@/lib/candidat';
+import { empreinteDuFichier } from '@/payload/empreintes';
 import {
   ETAPES_INSCRIPTION,
   inscriptionModifiable,
@@ -228,13 +229,18 @@ export async function deposerPhoto(_precedent: Etat, donnees: FormData): Promise
   }
 
   const payload = await getPayload({ config });
+  const octets = Buffer.from(await fichier.arrayBuffer());
 
   try {
     const piece = await payload.create({
       collection: 'pieces',
-      data: { nature: 'photo', deposePar: Number(acces.candidat.id) } as never,
+      data: {
+        nature: 'photo',
+        deposePar: Number(acces.candidat.id),
+        empreinte: empreinteDuFichier(octets),
+      } as never,
       file: {
-        data: Buffer.from(await fichier.arrayBuffer()),
+        data: octets,
         name: fichier.name,
         mimetype: fichier.type,
         size: fichier.size,
@@ -251,6 +257,105 @@ export async function deposerPhoto(_precedent: Etat, donnees: FormData): Promise
     });
   } catch {
     return { message: 'Le dépôt n’a pas abouti. Vérifiez votre connexion et réessayez.' };
+  }
+
+  revalidatePath('/mon-dossier', 'layout');
+  return RIEN;
+}
+
+/* -------------------------------------------------- Vérification d'identité */
+
+/** Les trois clichés de l'étape 5, et le champ du dossier que chacun remplit. */
+const CLICHES = {
+  recto: 'pieceRecto',
+  verso: 'pieceVerso',
+  selfie: 'pieceSelfie',
+} as const;
+
+export type Cliche = keyof typeof CLICHES;
+
+/**
+ * Dépose l'un des trois clichés de la pièce d'identité — §5.1, étape 5.
+ *
+ * « Le candidat photographie sa pièce d'identité recto et verso, puis se
+ * photographie tenant cette pièce. »
+ *
+ * L'empreinte du fichier est calculée et conservée (§5.4) : c'est elle qui
+ * permettra de repérer le même document déposé dans deux dossiers distincts.
+ * Elle est prise sur les octets reçus, avant tout traitement d'image par
+ * Payload, pour attester de ce que le candidat a effectivement envoyé.
+ */
+export async function deposerCliche(_precedent: Etat, donnees: FormData): Promise<Etat> {
+  const acces = await dossierOuvert();
+  if (!acces.ok) return acces.etat;
+
+  const cliche = String(donnees.get('cliche') ?? '') as Cliche;
+  if (!(cliche in CLICHES)) return { message: 'Cliché inconnu.' };
+
+  const fichier = donnees.get('fichier');
+  if (!(fichier instanceof File) || fichier.size === 0) {
+    return { message: 'Choisissez ou prenez une photographie.', champ: 'fichier' };
+  }
+  if (fichier.size > POIDS_PHOTO) {
+    return { message: 'Cette image dépasse 4 Mo. Reprenez la photographie.', champ: 'fichier' };
+  }
+  if (!fichier.type.startsWith('image/')) {
+    return { message: 'Déposez une image, pas un document.', champ: 'fichier' };
+  }
+
+  const payload = await getPayload({ config });
+
+  try {
+    const octets = Buffer.from(await fichier.arrayBuffer());
+
+    const piece = await payload.create({
+      collection: 'pieces',
+      data: {
+        nature: 'identite',
+        deposePar: Number(acces.candidat.id),
+        empreinte: empreinteDuFichier(octets),
+      } as never,
+      file: {
+        data: octets,
+        name: fichier.name,
+        mimetype: fichier.type,
+        size: fichier.size,
+      },
+      overrideAccess: true,
+    });
+
+    await payload.update({
+      collection: 'candidatures',
+      id: acces.dossier.id,
+      data: { [CLICHES[cliche]]: piece.id, identiteControle: 'attente' } as never,
+      overrideAccess: true,
+      context: { auteurImpose: 'Candidat' },
+    });
+  } catch {
+    return { message: 'Le dépôt n’a pas abouti. Vérifiez votre connexion et réessayez.' };
+  }
+
+  revalidatePath('/mon-dossier', 'layout');
+  return RIEN;
+}
+
+/** Retire un cliché, pour le reprendre. */
+export async function retirerCliche(cliche: Cliche): Promise<Etat> {
+  const acces = await dossierOuvert();
+  if (!acces.ok) return acces.etat;
+  if (!(cliche in CLICHES)) return { message: 'Cliché inconnu.' };
+
+  const payload = await getPayload({ config });
+  try {
+    await payload.update({
+      collection: 'candidatures',
+      id: acces.dossier.id,
+      data: { [CLICHES[cliche]]: null } as never,
+      overrideAccess: true,
+      context: { auteurImpose: 'Candidat' },
+    });
+  } catch {
+    return { message: 'Le retrait n’a pas abouti. Réessayez.' };
   }
 
   revalidatePath('/mon-dossier', 'layout');

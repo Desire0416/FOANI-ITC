@@ -105,6 +105,15 @@ export const ROLES_DOSSIERS: readonly Role[] = [
 export const ROLES_INSTRUCTION: readonly Role[] = ['administrateur', 'admission'];
 
 /**
+ * Le contrôle visuel d'identité — Note complémentaire §4.8.
+ *
+ * « Qui décide de l'admission ne valide pas l'inscription. Deux regards
+ * successifs sur un même dossier, dont l'un porte spécifiquement sur les
+ * pièces. » L'admission en est donc exclue : elle a déjà porté son regard.
+ */
+export const ROLES_SCOLARITE_IDENTITE: readonly Role[] = ['administrateur', 'scolarite'];
+
+/**
  * Prononcer l'admission.
  *
  * Volontairement identique à l'instruction, et volontairement fermé à la

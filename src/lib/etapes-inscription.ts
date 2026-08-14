@@ -14,7 +14,13 @@ import type { Candidature } from '@/payload-types';
    commence. Ce qui manque est dit, à chaque écran.
    ========================================================================== */
 
-export type IdEtapeInscription = 'etat-civil' | 'filiation' | 'residence' | 'urgence' | 'photo';
+export type IdEtapeInscription =
+  | 'etat-civil'
+  | 'filiation'
+  | 'residence'
+  | 'urgence'
+  | 'photo'
+  | 'piece-identite';
 
 export type EtapeInscription = {
   readonly id: IdEtapeInscription;
@@ -59,6 +65,13 @@ export const ETAPES_INSCRIPTION: readonly EtapeInscription[] = [
     libelle: 'Votre photographie',
     resume: 'Le portrait qui figurera sur votre carte étudiant.',
     href: '/mon-dossier/inscription/photo',
+  },
+  {
+    id: 'piece-identite',
+    numero: 6,
+    libelle: 'Votre pièce d’identité',
+    resume: 'Recto, verso, et vous la tenant.',
+    href: '/mon-dossier/inscription/piece-identite',
   },
 ];
 
@@ -122,6 +135,12 @@ export function manquesInscription(
   if (etape === 'photo') {
     if (vide(d.photo)) absents.push('votre photographie d’identité');
     else if (vide(d.photoConsentieLe)) absents.push('votre accord pour l’impression sur la carte');
+  }
+
+  if (etape === 'piece-identite') {
+    if (vide(d.pieceRecto)) absents.push('le recto de votre pièce');
+    if (vide(d.pieceVerso)) absents.push('le verso de votre pièce');
+    if (vide(d.pieceSelfie)) absents.push('votre photographie tenant la pièce');
   }
 
   return absents;
