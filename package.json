@@ -17,7 +17,9 @@
     "amorcer-editorial": "payload run scripts/amorcer-editorial.ts",
     "creer-agent": "payload run scripts/creer-agent.ts",
     "amorcer-agents": "payload run scripts/amorcer-agents.ts",
-    "recette-echeance": "payload run scripts/recette-echeance.ts"
+    "recette-echeance": "payload run scripts/recette-echeance.ts",
+    "recette-offre": "payload run scripts/recette-offre.ts",
+    "recette-admis": "payload run scripts/recette-admis.ts"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.88.0",

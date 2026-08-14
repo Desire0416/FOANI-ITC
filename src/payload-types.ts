@@ -73,6 +73,7 @@ export interface Config {
     personnes: Personne;
     candidatures: Candidature;
     pieces: Piece;
+    documents: Document;
     compteurs: Compteur;
     actualites: Actualite;
     evenements: Evenement;
@@ -89,6 +90,7 @@ export interface Config {
     personnes: PersonnesSelect<false> | PersonnesSelect<true>;
     candidatures: CandidaturesSelect<false> | CandidaturesSelect<true>;
     pieces: PiecesSelect<false> | PiecesSelect<true>;
+    documents: DocumentsSelect<false> | DocumentsSelect<true>;
     compteurs: CompteursSelect<false> | CompteursSelect<true>;
     actualites: ActualitesSelect<false> | ActualitesSelect<true>;
     evenements: EvenementsSelect<false> | EvenementsSelect<true>;
@@ -482,10 +484,52 @@ export interface Candidature {
       }[]
     | null;
   soumisLe?: string | null;
+  codeEmpreinte?: string | null;
+  codeExpire?: string | null;
+  codeEssais?: number | null;
+  /**
+   * Horodatage de l’acceptation, confirmée par code (RG-49).
+   */
+  offreAccepteeLe?: string | null;
   /**
    * Posée au moment de la décision, quinze jours plus tard (§7.1). Elle ne se déplace plus : c’est la date annoncée au candidat dans sa lettre d’admission.
    */
   limiteAcceptation?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Ce que l’établissement a remis. Un document délivré ne se modifie pas : on en délivre un nouveau.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents".
+ */
+export interface Document {
+  id: number;
+  nature:
+    | 'lettre-admission'
+    | 'certificat-scolarite'
+    | 'carte-etudiant'
+    | 'recu-versement'
+    | 'attestation-inscription'
+    | 'engagement-signe';
+  numero: string;
+  /**
+   * Saisi sur la page publique pour contrôler l’authenticité.
+   */
+  code: string;
+  candidature?: (number | null) | Candidature;
+  personne?: (number | null) | Personne;
+  delivreLe: string;
+  donnees:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -668,6 +712,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pieces';
         value: number | Piece;
+      } | null)
+    | ({
+        relationTo: 'documents';
+        value: number | Document;
       } | null)
     | ({
         relationTo: 'compteurs';
@@ -867,6 +915,10 @@ export interface CandidaturesSelect<T extends boolean = true> {
         id?: T;
       };
   soumisLe?: T;
+  codeEmpreinte?: T;
+  codeExpire?: T;
+  codeEssais?: T;
+  offreAccepteeLe?: T;
   limiteAcceptation?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -910,6 +962,21 @@ export interface PiecesSelect<T extends boolean = true> {
               filename?: T;
             };
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents_select".
+ */
+export interface DocumentsSelect<T extends boolean = true> {
+  nature?: T;
+  numero?: T;
+  code?: T;
+  candidature?: T;
+  personne?: T;
+  delivreLe?: T;
+  donnees?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

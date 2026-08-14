@@ -399,6 +399,10 @@ export const PIED_COLONNES: readonly { readonly titre: string; readonly liens: r
 ];
 
 export const PIED_LEGAL: readonly LienNav[] = [
+  /* La page de vérification est destinée à des tiers — employeur, banque,
+     administration — qui arrivent par un document, pas par le site. Le pied de
+     page est le seul endroit qu'ils regarderont. */
+  { libelle: 'Vérifier un document', href: '/verifier' },
   { libelle: 'Mentions légales', href: '/mentions-legales' },
   { libelle: 'Politique de confidentialité', href: '/confidentialite' },
   { libelle: 'Politique relative aux traceurs', href: '/traceurs' },

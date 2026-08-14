@@ -34,6 +34,17 @@ const LARGEUR = 6;
  * seul endroit du dispositif où un compteur est écrit.
  */
 export async function attribuerReference(payload: Payload, sequence: Sequence): Promise<string> {
+  return formater(sequence, await incrementer(payload, sequence));
+}
+
+/**
+ * Incrémente une série nommée et rend sa nouvelle valeur.
+ *
+ * Les documents délivrés (§5.2) ont leur propre série par nature de document :
+ * les lettres d'admission se numérotent indépendamment des certificats. D'où
+ * une fonction qui ne présume rien du format, laissée à l'appelant.
+ */
+export async function incrementer(payload: Payload, sequence: string): Promise<number> {
   const existantes = await payload.find({
     collection: 'compteurs',
     where: { sequence: { equals: sequence } },
@@ -49,7 +60,7 @@ export async function attribuerReference(payload: Payload, sequence: Sequence): 
       data: { sequence, valeur: 1 },
       overrideAccess: true,
     });
-    return formater(sequence, cree.valeur as number);
+    return cree.valeur as number;
   }
 
   const suivant = (courant.valeur as number) + 1;
@@ -60,7 +71,7 @@ export async function attribuerReference(payload: Payload, sequence: Sequence): 
     overrideAccess: true,
   });
 
-  return formater(sequence, suivant);
+  return suivant;
 }
 
 function formater(sequence: Sequence, valeur: number): string {

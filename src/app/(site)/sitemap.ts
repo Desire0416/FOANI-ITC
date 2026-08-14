@@ -34,6 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { chemin: '/presse', priorite: 0.5 },
     { chemin: '/contact', priorite: 0.7 },
     { chemin: '/espace-numerique', priorite: 0.5 },
+    { chemin: '/verifier', priorite: 0.4 },
     { chemin: '/plan-du-site', priorite: 0.3 },
     { chemin: '/mentions-legales', priorite: 0.2 },
     { chemin: '/confidentialite', priorite: 0.2 },

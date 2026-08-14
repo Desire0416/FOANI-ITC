@@ -74,6 +74,21 @@ export function etat(cle: string | undefined): EtatDossier {
   );
 }
 
+/**
+ * Rend lisible une ligne de journal.
+ *
+ * Le journal enregistre les états par leur clé — `offre-acceptee` — parce que
+ * c'est une trace technique qui doit rester stable même si un libellé change.
+ * Mais le candidat lit sa propre histoire : on lui rend les mots, pas les clés.
+ * La substitution se fait à l'affichage, jamais à l'écriture.
+ */
+export function journalEnClair(action: string): string {
+  return action.replace(/[a-z]+(?:-[a-z]+)+|[a-z]{4,}/g, (mot) => {
+    const trouve = PAR_CLE.get(mot);
+    return trouve ? trouve.libelle.toLocaleLowerCase('fr-FR') : mot;
+  });
+}
+
 /** Habillage des pastilles, partagé par le back-office et le portail candidat. */
 export const CLASSES_PASTILLE: Record<TonPastille, string> = {
   neutre: 'bg-graphite-100 text-graphite-600',
@@ -128,12 +143,46 @@ export const SENS_CANDIDAT: Record<string, SensCandidat> = {
   },
   admis: {
     titre: 'Vous êtes admis',
-    corps: 'Le service de la scolarité vous indiquera les démarches d’inscription.',
+    corps:
+      'Il vous reste à accepter votre offre, puis à régler les frais qui réservent votre place. Tout se fait ici, sans vous déplacer.',
+    aVous: true,
   },
   'admis-condition': {
     titre: 'Vous êtes admis, sous condition',
-    corps: 'Les conditions à remplir sont indiquées ci-dessous.',
+    corps:
+      'Les conditions à remplir sont indiquées ci-dessous. Vous pouvez accepter votre offre dès maintenant.',
     aVous: true,
+  },
+  'offre-acceptee': {
+    titre: 'Votre offre est acceptée',
+    corps:
+      'Votre place n’est pas encore réservée : elle le sera dès que votre versement aura été constaté par le service des finances.',
+    aVous: true,
+  },
+  'versement-annonce': {
+    titre: 'Votre versement est annoncé',
+    corps:
+      'Le service des finances va le rapprocher de son relevé. Vous n’avez rien à faire : nous vous prévenons dès que votre place est réservée.',
+  },
+  'place-reservee': {
+    titre: 'Votre place est réservée',
+    corps:
+      'Il reste à compléter votre dossier d’inscription et à signer vos engagements. Ces étapes ouvrent prochainement dans cet espace.',
+    aVous: true,
+  },
+  'inscription-a-valider': {
+    titre: 'Votre inscription est en cours de validation',
+    corps: 'Le service de la scolarité contrôle votre dossier et vos engagements signés.',
+  },
+  'acces-ouverts': {
+    titre: 'Vos accès sont ouverts',
+    corps:
+      'Vos identifiants vous ont été transmis. Vos cours vous sont accessibles. Bienvenue à FOANI-ITC.',
+  },
+  annule: {
+    titre: 'Votre inscription a été annulée',
+    corps:
+      'Contactez le service des admissions si vous souhaitez connaître les conditions de remboursement.',
   },
   attente: {
     titre: 'Vous êtes sur liste d’attente',
@@ -146,7 +195,8 @@ export const SENS_CANDIDAT: Record<string, SensCandidat> = {
   },
   inscrit: {
     titre: 'Vous êtes inscrit',
-    corps: 'Votre dossier est passé à la scolarité. Bienvenue à FOANI-ITC.',
+    corps:
+      'Votre numéro étudiant vous est attribué. Vos accès aux cours sont en cours d’ouverture.',
   },
   desiste: {
     titre: 'Vous vous êtes désisté',

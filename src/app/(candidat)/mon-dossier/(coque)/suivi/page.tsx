@@ -4,11 +4,33 @@ import { IconCheck, IconClock, IconFile } from '@/components/brand/icons';
 import { Alerte, Carte, Ligne } from '@/components/candidat/ui';
 import { CYCLE_LABELS, getFormation, titreComplet } from '@/content/formations';
 import { exigerDossier } from '@/lib/candidat';
+import { AccepterOffre, AnnoncerVersement } from '@/components/candidat/offre';
+import { referenceReglement } from '@/app/(candidat)/mon-dossier/offre';
+import { joursRestants } from '@/payload/chaine';
 import { dossierModifiable, etapeDeReprise } from '@/lib/etapes-dossier';
-import { CLASSES_PASTILLE, etat as lireEtat, formatDate, sensCandidat } from '@/lib/etats';
+import {
+  CLASSES_PASTILLE,
+  etat as lireEtat,
+  formatDate,
+  journalEnClair,
+  sensCandidat,
+} from '@/lib/etats';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = { title: 'Suivre mon dossier' };
+
+/* Une lettre d'admission ne se retire pas : elle reste consultable tant que
+   l'admission tient, y compris après l'inscription. */
+const LETTRE_DISPONIBLE = [
+  'admis',
+  'admis-condition',
+  'offre-acceptee',
+  'versement-annonce',
+  'place-reservee',
+  'inscription-a-valider',
+  'inscrit',
+  'acces-ouverts',
+];
 
 /* ==========================================================================
    Suivi du dossier — CDC §10.4
@@ -34,6 +56,7 @@ export default async function SuiviDossier({
 }) {
   const { dossier } = await exigerDossier();
   const { envoye } = await searchParams;
+  const reglement = await referenceReglement(dossier.reference);
 
   const etat = lireEtat(dossier.etat);
   const sens = sensCandidat(dossier.etat);
@@ -113,6 +136,34 @@ export default async function SuiviDossier({
               </div>
             ) : null}
 
+            {/* Étape 1 : la lettre, dès l'admission et pour toujours après. */}
+            {LETTRE_DISPONIBLE.includes(dossier.etat) ? (
+              <Link
+                href="/mon-dossier/lettre"
+                className="mb-5 flex items-center gap-3 rounded-2xl border border-ink-100 bg-ink-50 p-4 text-ink-800 transition-colors hover:bg-ink-100"
+              >
+                <IconFile aria-hidden="true" className="h-5 w-5 shrink-0" />
+                <span className="min-w-0">
+                  <span className="block text-[0.9375rem] font-semibold">
+                    Votre lettre d’admission
+                  </span>
+                  <span className="block text-[0.8125rem] text-ink-700">
+                    Numérotée, avec son code de vérification. À imprimer ou enregistrer en PDF.
+                  </span>
+                </span>
+              </Link>
+            ) : null}
+
+            {/* Étape 2 du parcours : accepter, ou décliner. */}
+            {(dossier.etat === 'admis' || dossier.etat === 'admis-condition') ? (
+              <AccepterOffre joursRestants={joursRestants(dossier.limiteAcceptation)} />
+            ) : null}
+
+            {/* Étape 3 : annoncer le versement qui réserve la place. */}
+            {dossier.etat === 'offre-acceptee' ? (
+              <AnnoncerVersement reference={reglement} />
+            ) : null}
+
             {ouvert ? (
               <Link href={etapeDeReprise(dossier)} className="bouton bouton--principal mt-5">
                 {rejetees.length > 0 ? 'Redéposer mes documents' : 'Reprendre mon dossier'}
@@ -159,7 +210,9 @@ export default async function SuiviDossier({
                   {rang === 0 ? <IconClock className="h-4 w-4" /> : <IconCheck className="h-3.5 w-3.5" />}
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-[0.9375rem] text-ink-800">{entree.action}</span>
+                  <span className="block text-[0.9375rem] text-ink-800">
+                    {journalEnClair(entree.action ?? '')}
+                  </span>
                   <span className="mt-0.5 block text-[0.8125rem] text-graphite-500">
                     {formatDate(entree.date, true)}
                   </span>

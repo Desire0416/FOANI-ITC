@@ -266,6 +266,13 @@ Le schéma se pose donc explicitement, une fois, par la **connexion directe** :
 DATABASE_URL="$DATABASE_URL_UNPOOLED" PAYLOAD_DB_PUSH=1 pnpm amorcer
 ```
 
+Après toute évolution des collections — un champ ajouté, une collection créée —
+le schéma se repose de la même manière, sans réamorcer les données :
+
+```
+DATABASE_URL="$DATABASE_URL_UNPOOLED" PAYLOAD_DB_PUSH=1 pnpm exec payload run scripts/pousser-schema.ts
+```
+
 Ne jamais renseigner `PAYLOAD_DB_PUSH` dans l'environnement de la plateforme.
 
 **Sauvegarde et restauration (§21.1, critère éliminatoire du §24.4)** — la base
@@ -292,12 +299,30 @@ Trois cas, dans cet ordre de priorité, sans modification de code :
 
 Dans les trois cas, une pièce d'identité n'a jamais d'adresse devinable (§20.2).
 
-### 4. Comptes
+### 4. Tâche planifiée
+
+`vercel.json` déclare un passage quotidien à six heures sur
+`/api/taches/echeances`. Cette tâche constate les désistements dont le délai
+d'acceptation — quinze jours (§7.1) — est expiré, et libère les places
+correspondantes (RG-45).
+
+L'adresse est protégée par `TACHES_SECRET`, à renseigner dans les variables
+d'environnement. Sans ce secret, elle refuse tout : mieux vaut une tâche qui ne
+tourne pas qu'une adresse ouverte capable de faire basculer des dossiers.
+
+Tant que la planification n'est pas active, le poste Admission déclenche le
+même balayage à la main depuis sa file de travail.
+
+### 5. Comptes
 
 ```
 pnpm amorcer            # premier administrateur (ADMIN_EMAIL, ADMIN_MOT_DE_PASSE)
 pnpm creer-agent        # un agent, avec son rôle (AGENT_EMAIL, AGENT_MOT_DE_PASSE, AGENT_ROLE)
 pnpm amorcer-agents     # neuf comptes d'essai, un par rôle — mots de passe affichés une fois
+pnpm recette-offre      # sans argument : liste les dossiers et leur état
+                        # DOSSIER=D000004 : replace le dossier en « Admis »
+pnpm recette-admis      # DOSSIER=… MOTDEPASSE=… : rouvre le compte du candidat admis
+pnpm recette-echeance   # DOSSIER=… : fabrique une offre expirée, pour éprouver RG-45
 pnpm amorcer-editorial  # reprend en base les actualités et événements initiaux
 ```
 

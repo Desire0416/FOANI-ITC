@@ -289,6 +289,26 @@ export default async function PageTableauDeBord() {
   const reception = receptionParSemaine(pourGraphiques);
   const parCycle = repartitionParCycle(pourGraphiques);
 
+  /* Ce que l'agent lit en premier doit parler de son poste, pas du dispositif.
+     Un agent des finances à qui l'on annonce « aucun dossier n'attend
+     d'instruction » alors qu'un versement l'attend juste en dessous cesse de
+     croire la phrase — et, à terme, l'écran. La file du poste prime donc sur
+     le décompte général, qui ne subsiste que pour les rôles sans file. */
+  const enFile = dossiersDeLaFile.totalDocs;
+  const resume = poste
+    ? enFile > 0
+      ? `${enFile} dossier${enFile > 1 ? 's' : ''} vous ${enFile > 1 ? 'sont adressés' : 'est adressé'}.`
+      : 'Votre file est vide. Rien n’attend votre poste pour le moment.'
+    : voitLesDossiers
+      ? aInstruire > 0
+        ? `${aInstruire} dossier${aInstruire > 1 ? 's' : ''} attend${aInstruire > 1 ? 'ent' : ''} votre instruction.`
+        : 'Aucun dossier n’attend d’instruction pour le moment.'
+      : voitLEditorial
+        ? aValider > 0
+          ? `${aValider} contenu${aValider > 1 ? 'x' : ''} attend${aValider > 1 ? 'ent' : ''} une validation.`
+          : 'Aucun contenu n’attend de validation.'
+        : 'Votre rôle n’ouvre pas encore d’espace de travail dans le dispositif.';
+
   const heure = new Date().getHours();
   const salutation = heure < 12 ? 'Bonjour' : heure < 18 ? 'Bon après-midi' : 'Bonsoir';
   const pourcentage = (valeur: number) => (total > 0 ? `${Math.round((valeur / total) * 100)} %` : '—');
@@ -298,17 +318,7 @@ export default async function PageTableauDeBord() {
       <EnTetePage
         surtitre={LIBELLES_ROLE[agent.role]}
         titre={`${salutation}${agent.prenoms ? `, ${agent.prenoms}` : ''}.`}
-        resume={
-          voitLesDossiers
-            ? aInstruire > 0
-              ? `${aInstruire} dossier${aInstruire > 1 ? 's' : ''} attend${aInstruire > 1 ? 'ent' : ''} votre instruction.`
-              : 'Aucun dossier n’attend d’instruction pour le moment.'
-            : voitLEditorial
-              ? aValider > 0
-                ? `${aValider} contenu${aValider > 1 ? 'x' : ''} attend${aValider > 1 ? 'ent' : ''} une validation.`
-                : 'Aucun contenu n’attend de validation.'
-              : 'Votre rôle n’ouvre pas encore d’espace de travail dans le dispositif.'
-        }
+        resume={resume}
         actions={
           voitLesDossiers ? (
             <Link href="/gestion/candidatures" className="bouton bouton--principal">

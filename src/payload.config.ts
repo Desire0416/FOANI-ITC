@@ -17,6 +17,7 @@ import { Evenements } from './payload/collections/evenements';
 import { Offres } from './payload/collections/offres';
 import { Personnes } from './payload/collections/personnes';
 import { Pieces } from './payload/collections/pieces';
+import { Documents } from './payload/collections/documents';
 import { Utilisateurs } from './payload/collections/utilisateurs';
 
 const repertoire = path.dirname(fileURLToPath(import.meta.url));
@@ -102,6 +103,7 @@ export default buildConfig({
     Personnes,
     Candidatures,
     Pieces,
+    Documents,
     Compteurs,
     // Éditorial — ce que l'établissement publie lui-même (§15).
     Actualites,

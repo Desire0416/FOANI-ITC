@@ -416,6 +416,41 @@ export const Candidatures: CollectionConfig = {
       label: 'Soumis le',
       admin: { position: 'sidebar', readOnly: true },
     },
+    /* ------------------------------------------- Acceptation de l'offre
+       §5.1 étape 2 — « L'acceptation est confirmée par un code à usage unique
+       envoyé sur son téléphone, et horodatée. » Le code n'est jamais conservé
+       en clair : seule son empreinte l'est, et elle n'est lisible par
+       personne — ni par le candidat, ni par un agent. */
+    {
+      name: 'codeEmpreinte',
+      type: 'text',
+      access: { read: () => false, update: () => false, create: () => false },
+      admin: { hidden: true },
+    },
+    {
+      name: 'codeExpire',
+      type: 'date',
+      access: { read: () => false, update: () => false, create: () => false },
+      admin: { hidden: true },
+    },
+    {
+      name: 'codeEssais',
+      type: 'number',
+      defaultValue: 0,
+      access: { read: () => false, update: () => false, create: () => false },
+      admin: { hidden: true },
+    },
+    {
+      name: 'offreAccepteeLe',
+      type: 'date',
+      label: 'Offre acceptée le',
+      access: { update: ({ req }) => req.user?.collection === 'utilisateurs' },
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Horodatage de l’acceptation, confirmée par code (RG-49).',
+      },
+    },
     {
       name: 'limiteAcceptation',
       type: 'date',
