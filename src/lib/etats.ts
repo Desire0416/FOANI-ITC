@@ -24,10 +24,46 @@ export const ETATS: readonly EtatDossier[] = [
   { cle: 'complet', libelle: 'Complet', ton: 'vert', sens: 'Pièces validées, en attente de décision.' },
   { cle: 'admis', libelle: 'Admis', ton: 'plein', sens: 'Décision favorable enregistrée.' },
   { cle: 'admis-condition', libelle: 'Admis sous condition', ton: 'plein', sens: 'Conditions à lever.' },
+  {
+    cle: 'offre-acceptee',
+    libelle: 'Offre acceptée',
+    ton: 'encre',
+    sens: 'Le candidat doit régler les frais réservant sa place.',
+  },
+  {
+    cle: 'versement-annonce',
+    libelle: 'Versement annoncé',
+    ton: 'or',
+    sens: 'À rapprocher du relevé par les finances.',
+  },
+  {
+    cle: 'place-reservee',
+    libelle: 'Place réservée',
+    ton: 'vert',
+    sens: 'La main est au candidat, qui remplit son dossier d’inscription.',
+  },
+  {
+    cle: 'inscription-a-valider',
+    libelle: 'Inscription à valider',
+    ton: 'or',
+    sens: 'À contrôler par la scolarité.',
+  },
   { cle: 'attente', libelle: 'Liste d’attente', ton: 'neutre', sens: 'Décision différée.' },
   { cle: 'refuse', libelle: 'Refusé', ton: 'rouge', sens: 'Décision défavorable.' },
-  { cle: 'inscrit', libelle: 'Inscrit', ton: 'plein', sens: 'Devenu étudiant.' },
+  { cle: 'inscrit', libelle: 'Inscrit', ton: 'plein', sens: 'Accès à ouvrir par la pédagogie.' },
+  {
+    cle: 'acces-ouverts',
+    libelle: 'Accès ouverts',
+    ton: 'plein',
+    sens: 'Parcours d’admission achevé.',
+  },
   { cle: 'desiste', libelle: 'Désisté', ton: 'rouge', sens: 'Le candidat a renoncé.' },
+  {
+    cle: 'annule',
+    libelle: 'Annulé',
+    ton: 'rouge',
+    sens: 'Renoncement après réservation de la place.',
+  },
 ];
 
 const PAR_CLE = new Map(ETATS.map((etat) => [etat.cle, etat]));

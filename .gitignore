@@ -24,6 +24,12 @@ pieces/
 # fournies sont des documents internes : ils restent sur le poste de travail.
 # Les visuels réellement utilisés par le site vivent dans `public/`, et sont
 # versionnés.
+# Tout document Word : ces fichiers sont des documents de travail internes,
+# et l'un d'eux porte la mention « CONFIDENTIEL — Ne pas diffuser ». Un motif
+# nommant un seul fichier ne protégeait pas le suivant.
+*.docx
+*.doc
+~$*
 CDC_Fonctionnel_FITC.docx
 /Image_hero.png
 /Section hero.png

@@ -19,6 +19,10 @@ export const ROLES = [
   'consultation',
   'carrieres',
   'recherche',
+  /* Poste Pédagogie — note complémentaire §4.5. Il ouvre les accès des
+     nouveaux inscrits et tient les espaces de cours ; sans lui, la chaîne
+     s'arrête à « Inscrit » et personne n'est chargé d'ouvrir les accès. */
+  'pedagogie',
 ] as const;
 
 export type Role = (typeof ROLES)[number];
@@ -33,6 +37,7 @@ export const LIBELLES_ROLE: Record<Role, string> = {
   consultation: 'Consultation',
   carrieres: 'Responsable carrières et partenariats',
   recherche: 'Référent recherche et innovation',
+  pedagogie: 'Pédagogie',
 };
 
 export const PERIMETRES_ROLE: Record<Role, string> = {
@@ -45,6 +50,8 @@ export const PERIMETRES_ROLE: Record<Role, string> = {
   consultation: 'Lecture des tableaux de bord et des états de synthèse.',
   carrieres: 'Offres de stage et d’emploi, relations entreprises, demandes entrantes.',
   recherche: 'Profils chercheurs, projets, publications et contenus scientifiques.',
+  pedagogie:
+    'Ouverture des accès des inscrits, espaces de cours et comptes enseignants.',
 };
 
 /* ==========================================================================
@@ -233,6 +240,17 @@ export const PERIMETRE_DETAILLE: Record<Role, Perimetre> = {
     nePeutPas: [
       'Publier des actualités ou des événements',
       'Accéder aux dossiers de candidature',
+    ],
+  },
+  pedagogie: {
+    peut: [
+      'Ouvrir les accès des étudiants nouvellement inscrits',
+      'Rattacher chaque étudiant aux cours de sa formation',
+      'Tenir les comptes des enseignants et les espaces de cours',
+    ],
+    nePeutPas: [
+      'Accéder aux données financières ni aux pièces d’identité',
+      'Prononcer une admission ni valider une inscription',
     ],
   },
   recherche: {

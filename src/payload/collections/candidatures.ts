@@ -28,6 +28,14 @@ const OPTIONS_FORMATION = FORMATIONS.map((formation) => ({
   value: formation.slug,
 }));
 
+/**
+ * Les états de la chaîne — note complémentaire §3.2 et §3.4.
+ *
+ * Six états sont venus s'ajouter : la chaîne s'arrêtait à « Admis », laissant
+ * le parcours s'interrompre au moment précis où il devient décisif — celui où
+ * un admis devient, ou non, un inscrit. Le détail de chaque étape, son service
+ * propriétaire et son délai d'alerte vivent dans `payload/chaine.ts`.
+ */
 export const ETATS_CANDIDATURE = [
   { label: 'Brouillon', value: 'brouillon' },
   { label: 'Soumis', value: 'soumis' },
@@ -36,10 +44,16 @@ export const ETATS_CANDIDATURE = [
   { label: 'Complet', value: 'complet' },
   { label: 'Admis', value: 'admis' },
   { label: 'Admis sous condition', value: 'admis-condition' },
+  { label: 'Offre acceptée', value: 'offre-acceptee' },
+  { label: 'Versement annoncé', value: 'versement-annonce' },
+  { label: 'Place réservée', value: 'place-reservee' },
+  { label: 'Inscription à valider', value: 'inscription-a-valider' },
+  { label: 'Inscrit', value: 'inscrit' },
+  { label: 'Accès ouverts', value: 'acces-ouverts' },
   { label: 'Liste d’attente', value: 'attente' },
   { label: 'Refusé', value: 'refuse' },
-  { label: 'Inscrit', value: 'inscrit' },
   { label: 'Désisté', value: 'desiste' },
+  { label: 'Annulé', value: 'annule' },
 ] as const;
 
 /** États que le candidat lui-même peut encore modifier. */

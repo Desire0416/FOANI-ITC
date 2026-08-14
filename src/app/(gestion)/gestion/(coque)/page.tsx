@@ -12,8 +12,11 @@ import { Anneau, Courbe, type PartAnneau, type PointSerie } from '@/components/g
 import { Carte, EnTetePage, Pastille, Tuile, Vide } from '@/components/gestion/ui';
 import { CYCLE_LABELS, getFormation, titreComplet } from '@/content/formations';
 import type { Cycle } from '@/content/types';
+import { CadreDuPoste, FileAttente, type LigneFile } from '@/components/gestion/file-attente';
 import { Perimetre } from '@/components/gestion/perimetre';
 import { exigerAgent, socle } from '@/lib/session';
+import { enAlerte } from '@/payload/chaine';
+import { posteDuRole } from '@/payload/postes';
 import { LIBELLES_ROLE, ROLES_DOSSIERS } from '@/payload/roles';
 
 export const metadata: Metadata = { title: 'Tableau de bord' };
@@ -153,6 +156,43 @@ export default async function PageTableauDeBord() {
   const voitLesDossiers = ROLES_DOSSIERS.includes(agent.role);
   const voitLEditorial = ROLES_EDITORIAUX.includes(agent.role);
 
+  /* Le poste que tient l'agent, et les états dont il est propriétaire. C'est
+     la file d'attente du §4.1 : ce qui attend son action, et rien d'autre. */
+  const poste = posteDuRole(agent.role);
+  const file = poste?.file ?? [];
+
+  const dossiersDeLaFile =
+    file.length > 0
+      ? await payload
+          .find({
+            collection: 'candidatures',
+            where: { etat: { in: [...file] } } as never,
+            sort: 'updatedAt',
+            limit: 12,
+            depth: 0,
+            overrideAccess: true,
+          })
+          .catch(() => ({ docs: [] as Record<string, unknown>[], totalDocs: 0 }))
+      : { docs: [] as Record<string, unknown>[], totalDocs: 0 };
+
+  const lignesFile: LigneFile[] = (dossiersDeLaFile.docs as Record<string, unknown>[]).map((brut) => {
+    const formation = typeof brut.voeu1 === 'string' ? getFormation(brut.voeu1) : undefined;
+    const depuis = String(brut.updatedAt ?? '');
+    return {
+      id: String(brut.id),
+      reference: typeof brut.reference === 'string' ? brut.reference : null,
+      nom: String(brut.nomCandidat || 'Candidat sans nom'),
+      formation: formation ? `${CYCLE_LABELS[formation.cycle]} — ${titreComplet(formation)}` : null,
+      etat: String(brut.etat ?? ''),
+      depuis,
+      enAlerte: enAlerte(String(brut.etat ?? ''), depuis),
+    };
+  });
+
+  /* Les dossiers immobiles d'abord (RG-44) : ce sont eux qui coûtent une
+     place gelée ou une rentrée retardée. */
+  lignesFile.sort((a, b) => Number(b.enAlerte) - Number(a.enAlerte));
+
   const compter = (where?: Record<string, unknown>) =>
     payload
       .count({ collection: 'candidatures', where: where as never, overrideAccess: true })
@@ -266,8 +306,14 @@ export default async function PageTableauDeBord() {
         }
       />
 
-      {/* Le périmètre du rôle, à la première place où l'on regarde. */}
-      <Perimetre role={agent.role} />
+      {/* La file d'attente d'abord : l'écran d'accueil n'est pas un menu,
+          c'est une liste de travail (§4.1). */}
+      {poste && file.length > 0 ? (
+        <FileAttente poste={poste} lignes={lignesFile} total={dossiersDeLaFile.totalDocs} />
+      ) : null}
+
+      {/* Ce que le poste fait, consulte, et ne touche pas. */}
+      {poste ? <CadreDuPoste poste={poste} /> : <Perimetre role={agent.role} />}
 
       {/* ------------------------------------------------------------ Tuiles */}
       {voitLEditorial && !voitLesDossiers ? (

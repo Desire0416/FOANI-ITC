@@ -185,7 +185,8 @@ export interface Utilisateur {
     | 'finances'
     | 'consultation'
     | 'carrieres'
-    | 'recherche';
+    | 'recherche'
+    | 'pedagogie';
   /**
    * Intitulé de poste, tel qu’il figure dans l’organigramme.
    */
@@ -345,10 +346,16 @@ export interface Candidature {
     | 'complet'
     | 'admis'
     | 'admis-condition'
+    | 'offre-acceptee'
+    | 'versement-annonce'
+    | 'place-reservee'
+    | 'inscription-a-valider'
+    | 'inscrit'
+    | 'acces-ouverts'
     | 'attente'
     | 'refuse'
-    | 'inscrit'
-    | 'desiste';
+    | 'desiste'
+    | 'annule';
   candidat?: (number | null) | Candidat;
   /**
    * Renseignée à l’admission, ou rattachée si la personne est déjà connue (§10.5).
