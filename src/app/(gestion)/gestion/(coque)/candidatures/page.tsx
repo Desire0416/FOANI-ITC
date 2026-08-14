@@ -4,8 +4,9 @@ import { IconArrowUpRight, IconSearch } from '@/components/brand/icons';
 import { Carte, EnTetePage, Pastille, Vide } from '@/components/gestion/ui';
 import { CYCLE_LABELS, getFormation, titreComplet } from '@/content/formations';
 import { etat as lireEtat, etatsDeLaVue, formatDate, VUES } from '@/lib/etats';
-import { exigerAgent, socle } from '@/lib/session';
+import { exigerRole, socle } from '@/lib/session';
 import { cn } from '@/lib/utils';
+import { ROLES_DOSSIERS } from '@/payload/roles';
 
 export const metadata: Metadata = { title: 'Candidatures' };
 
@@ -24,7 +25,10 @@ export default async function PageCandidatures({
 }: {
   searchParams: Promise<Parametres>;
 }) {
-  await exigerAgent();
+  // Un dossier porte le nom, la date de naissance et le telephone d'une
+  // personne. Une session ne suffit pas : il faut un role qui en ait besoin
+  // (§5.2). Les roles editoriaux et carrieres n'en font pas partie.
+  await exigerRole(ROLES_DOSSIERS);
   const parametres = await searchParams;
   const payload = await socle();
 

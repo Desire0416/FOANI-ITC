@@ -6,7 +6,7 @@ import { getPayload } from 'payload';
 import config from '@payload-config';
 import { etat as lireEtat } from '@/lib/etats';
 import type { Candidature } from '@/payload-types';
-import { ROLES_CANDIDATURES, type Role } from '../roles';
+import { ROLES_DECISION, ROLES_INSTRUCTION, ROLES_VERSEMENTS, type Role } from '../roles';
 
 /* ==========================================================================
    Instruction d'une candidature — CDC §10.3
@@ -29,11 +29,31 @@ async function contexte() {
   return { payload, user };
 }
 
-function habilite(user: unknown): boolean {
+/**
+ * Une garde par acte, et non une seule pour tout l'ecran.
+ *
+ * Une garde unique faisait se ressembler des roles que le §5.2 distingue :
+ * la scolarite pouvait prononcer une admission, et les finances ne pouvaient
+ * pas rapprocher un versement — l'inverse exact de leurs perimetres.
+ *
+ * La separation tient en une phrase : celui qui instruit n'encaisse pas,
+ * celui qui rapproche les versements ne decide pas de l'admission.
+ */
+function habilite(user: unknown, roles: readonly Role[]): boolean {
   const agent = user as { collection?: string; role?: Role; actif?: boolean } | null;
   if (agent?.collection !== 'utilisateurs' || agent.actif === false) return false;
-  return agent.role ? ROLES_CANDIDATURES.includes(agent.role) : false;
+  return agent.role ? roles.includes(agent.role) : false;
 }
+
+/** Refus expliqué : l'agent doit savoir à quel service revient l'acte. */
+const REFUS = {
+  instruction:
+    'Instruire un dossier revient au service des admissions. Votre rôle ne le permet pas.',
+  decision:
+    'Prononcer une admission revient au service des admissions. Votre rôle ne le permet pas.',
+  versement:
+    'Rapprocher un versement du relevé revient au service des finances. Votre rôle ne le permet pas.',
+} as const;
 
 function rafraichir(id: string) {
   revalidatePath('/gestion/candidatures');
@@ -48,7 +68,7 @@ export type EtatInstruction = NonNullable<Candidature['etat']>;
 /** Fait avancer l'état du dossier. Le journal est écrit par la collection. */
 export async function changerEtat(id: string, nouvelEtat: EtatInstruction): Promise<Retour> {
   const { payload, user } = await contexte();
-  if (!habilite(user)) return { ok: false, message: 'Vous n’êtes pas habilité à instruire un dossier.' };
+  if (!habilite(user, ROLES_INSTRUCTION)) return { ok: false, message: REFUS.instruction };
 
   try {
     await payload.update({
@@ -76,7 +96,7 @@ export async function deciderPiece(
   motif: string,
 ): Promise<Retour> {
   const { payload, user } = await contexte();
-  if (!habilite(user)) return { ok: false, message: 'Vous n’êtes pas habilité à instruire un dossier.' };
+  if (!habilite(user, ROLES_INSTRUCTION)) return { ok: false, message: REFUS.instruction };
   if (etatPiece === 'rejetee' && motif.trim().length < 3) {
     return { ok: false, message: 'Un rejet demande un motif : le candidat doit savoir quoi corriger.' };
   }
@@ -115,7 +135,7 @@ export async function deciderPiece(
 /** Rapproche la référence de transaction du relevé — §10.2, validation humaine. */
 export async function rapprocherTransaction(id: string, verifiee: boolean): Promise<Retour> {
   const { payload, user } = await contexte();
-  if (!habilite(user)) return { ok: false, message: 'Vous n’êtes pas habilité à instruire un dossier.' };
+  if (!habilite(user, ROLES_VERSEMENTS)) return { ok: false, message: REFUS.versement };
 
   try {
     await payload.update({
@@ -147,7 +167,7 @@ export async function enregistrerDecision(
   conditions: string,
 ): Promise<Retour> {
   const { payload, user } = await contexte();
-  if (!habilite(user)) return { ok: false, message: 'Vous n’êtes pas habilité à décider d’une admission.' };
+  if (!habilite(user, ROLES_DECISION)) return { ok: false, message: REFUS.decision };
   if (sens === 'admis-condition' && conditions.trim().length < 3) {
     return { ok: false, message: 'Une admission sous condition demande les conditions à lever.' };
   }

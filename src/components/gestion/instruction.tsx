@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { IconCheck, IconClose, IconFile, IconInfo } from '@/components/brand/icons';
+import { IconCheck, IconClose, IconFile, IconInfo, IconShield } from '@/components/brand/icons';
 import { Pastille } from '@/components/gestion/ui';
 import {
   changerEtat,
@@ -30,6 +30,26 @@ export type PieceAffichee = {
   readonly etatPiece: 'attente' | 'acceptee' | 'rejetee';
   readonly motif: string | null;
 };
+
+/**
+ * Pourquoi ce panneau ne propose rien.
+ *
+ * Masquer les boutons ne suffit pas : un agent devant un panneau muet croit a
+ * une panne — ou, pire, ne comprend pas que son role a des limites. Le §5.2
+ * distingue neuf perimetres ; encore faut-il que celui qui en porte un sache
+ * ou s'arrete le sien, et a qui s'adresser.
+ */
+function Reserve({ acte, service }: { acte: string; service: string }) {
+  return (
+    <p className="flex items-start gap-2.5 rounded-xl border border-graphite-200 bg-paper-tint px-3.5 py-3 text-[0.8125rem] leading-relaxed text-graphite-600">
+      <IconShield aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-graphite-400" />
+      <span>
+        {acte} revient au <strong className="font-semibold text-ink-800">{service}</strong>. Votre
+        rôle donne la lecture, pas la décision.
+      </span>
+    </p>
+  );
+}
 
 function useCommande() {
   const [retour, setRetour] = useState<Retour | null>(null);
@@ -82,6 +102,12 @@ export function PiecesDuDossier({
 
   return (
     <>
+      {!modifiable ? (
+        <div className="mb-4">
+          <Reserve acte="Statuer sur une pièce" service="service des admissions" />
+        </div>
+      ) : null}
+
       <ul className="flex flex-col gap-3">
         {pieces.map((piece) => (
           <li key={piece.index} className="rounded-xl border border-graphite-100 bg-paper-tint p-4">
@@ -219,7 +245,9 @@ export function AvancementDossier({
     { cle: 'complet', libelle: 'Marquer complet', aide: 'Pièces validées, en attente de décision.' },
   ];
 
-  if (!modifiable) return null;
+  if (!modifiable) {
+    return <Reserve acte="Faire avancer un dossier" service="service des admissions" />;
+  }
 
   return (
     <>
@@ -265,11 +293,7 @@ export function DecisionDossier({
   const [conditions, setConditions] = useState('');
 
   if (!modifiable) {
-    return (
-      <p className="rounded-xl border border-dashed border-graphite-200 bg-paper-tint px-4 py-5 text-[0.875rem] leading-relaxed text-graphite-500">
-        La décision relève des rôles Admission et Scolarité.
-      </p>
-    );
+    return <Reserve acte="Prononcer une admission" service="service des admissions" />;
   }
 
   return (
@@ -378,6 +402,12 @@ export function FraisDeDossier({
           </dd>
         </div>
       </dl>
+
+      {!modifiable && reference ? (
+        <div className="mt-4">
+          <Reserve acte="Rapprocher un versement du relevé" service="service des finances" />
+        </div>
+      ) : null}
 
       {modifiable && reference ? (
         <button

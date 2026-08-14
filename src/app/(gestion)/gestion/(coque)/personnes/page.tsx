@@ -3,6 +3,7 @@ import { IconGraduation, IconSearch, IconShield } from '@/components/brand/icons
 import { Carte, EnTetePage, Pastille, Tuile, Vide } from '@/components/gestion/ui';
 import { formatDate } from '@/lib/etats';
 import { exigerRole, socle } from '@/lib/session';
+import { ROLES_PERSONNES_LECTURE } from '@/payload/roles';
 
 export const metadata: Metadata = { title: 'Personnes' };
 
@@ -18,7 +19,8 @@ export default async function PagePersonnes({
 }: {
   searchParams: Promise<{ readonly q?: string }>;
 }) {
-  await exigerRole(['administrateur', 'admission', 'scolarite', 'finances', 'consultation']);
+  // Lecture large, ecriture reservee : voir ROLES_PERSONNES.
+  await exigerRole(ROLES_PERSONNES_LECTURE);
   const parametres = await searchParams;
   const recherche = parametres.q?.trim() ?? '';
   const payload = await socle();

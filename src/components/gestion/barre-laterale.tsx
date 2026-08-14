@@ -15,7 +15,13 @@ import {
   IconTeacher,
   IconUsers,
 } from '@/components/brand/icons';
-import type { Role } from '@/payload/roles';
+import {
+  ROLES_COMPTES,
+  ROLES_DOSSIERS,
+  ROLES_PERSONNES_LECTURE,
+  ROLES_PIECES,
+  type Role,
+} from '@/payload/roles';
 import { cn } from '@/lib/utils';
 
 /* ==========================================================================
@@ -52,19 +58,19 @@ export const GROUPES: readonly Groupe[] = [
         libelle: 'Candidatures',
         href: '/gestion/candidatures',
         icone: IconFile,
-        roles: ['administrateur', 'admission', 'scolarite', 'finances', 'consultation'],
+        roles: ROLES_DOSSIERS,
       },
       {
         libelle: 'Comptes candidats',
         href: '/gestion/comptes',
         icone: IconUsers,
-        roles: ['administrateur', 'admission', 'scolarite'],
+        roles: ROLES_COMPTES,
       },
       {
         libelle: 'Pièces justificatives',
         href: '/gestion/pieces',
         icone: IconBriefcase,
-        roles: ['administrateur', 'admission', 'scolarite'],
+        roles: ROLES_PIECES,
       },
     ],
   },
@@ -75,7 +81,7 @@ export const GROUPES: readonly Groupe[] = [
         libelle: 'Personnes',
         href: '/gestion/personnes',
         icone: IconGraduation,
-        roles: ['administrateur', 'admission', 'scolarite', 'finances', 'consultation'],
+        roles: ROLES_PERSONNES_LECTURE,
       },
     ],
   },

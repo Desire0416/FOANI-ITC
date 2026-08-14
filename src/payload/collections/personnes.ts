@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { champReserveA, reserveA, suppressionInterdite } from '../acces';
-import { ROLES_PERSONNES, ROLES_PIECES } from '../roles';
+import { ROLES_PERSONNES, ROLES_PERSONNES_LECTURE, ROLES_PIECES } from '../roles';
 
 /* ==========================================================================
    Personnes — CDC §11.2
@@ -29,8 +29,12 @@ export const Personnes: CollectionConfig = {
       'Référentiel unique. Chaque candidat, étudiant ou participant n’y existe qu’une fois, et n’en est jamais retiré.',
   },
   access: {
+    /* Écriture réservée à la scolarité, qui tient le référentiel ; lecture
+       ouverte à qui doit y retrouver une personne — l'admission pour éviter
+       un doublon, les finances pour rattacher un versement. Les deux listes
+       viennent de la même matrice, ce qui les empêche de diverger. */
     create: reserveA(ROLES_PERSONNES),
-    read: reserveA([...ROLES_PERSONNES, 'finances', 'consultation']),
+    read: reserveA(ROLES_PERSONNES_LECTURE),
     update: reserveA(ROLES_PERSONNES),
     delete: suppressionInterdite,
   },

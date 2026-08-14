@@ -12,7 +12,9 @@ import { Anneau, Courbe, type PartAnneau, type PointSerie } from '@/components/g
 import { Carte, EnTetePage, Pastille, Tuile, Vide } from '@/components/gestion/ui';
 import { CYCLE_LABELS, getFormation, titreComplet } from '@/content/formations';
 import type { Cycle } from '@/content/types';
+import { Perimetre } from '@/components/gestion/perimetre';
 import { exigerAgent, socle } from '@/lib/session';
+import { LIBELLES_ROLE, ROLES_DOSSIERS } from '@/payload/roles';
 
 export const metadata: Metadata = { title: 'Tableau de bord' };
 
@@ -132,9 +134,24 @@ function formatCourt(valeur: string | undefined): string {
  * l'ouvre pour savoir combien de dossiers l'attendent. L'écran répond dans
  * cet ordre, et toutes les valeurs sont lues en base à l'affichage.
  */
+/** Mêmes rôles que la page des publications. */
+const ROLES_EDITORIAUX: readonly string[] = [
+  'administrateur',
+  'editeur',
+  'redacteur',
+  'carrieres',
+];
+
 export default async function PageTableauDeBord() {
   const agent = await exigerAgent();
   const payload = await socle();
+
+  /* Tous les roles voyaient les memes tuiles — celles de l'admission. Un
+     redacteur y lisait un nombre de dossiers qu'il n'a pas a connaitre, et n'y
+     trouvait rien de son propre travail. Le tableau de bord se scinde donc :
+     ceux qui instruisent voient les dossiers, les autres voient l'editorial. */
+  const voitLesDossiers = ROLES_DOSSIERS.includes(agent.role);
+  const voitLEditorial = ROLES_EDITORIAUX.includes(agent.role);
 
   const compter = (where?: Record<string, unknown>) =>
     payload
@@ -142,35 +159,63 @@ export default async function PageTableauDeBord() {
       .then((resultat) => resultat.totalDocs)
       .catch(() => 0);
 
-  const [total, aInstruire, complements, admis, comptes, personnes] = await Promise.all([
-    compter({ etat: { not_equals: 'brouillon' } }),
-    compter({ etat: { in: ['soumis', 'instruction'] } }),
-    compter({ etat: { equals: 'complement' } }),
-    compter({ etat: { in: ['admis', 'admis-condition', 'inscrit'] } }),
-    payload
-      .count({ collection: 'candidats', overrideAccess: true })
-      .then((r) => r.totalDocs)
-      .catch(() => 0),
-    payload
-      .count({ collection: 'personnes', overrideAccess: true })
-      .then((r) => r.totalDocs)
-      .catch(() => 0),
-  ]);
+  const [total, aInstruire, complements, admis, comptes, personnes] = voitLesDossiers
+    ? await Promise.all([
+        compter({ etat: { not_equals: 'brouillon' } }),
+        compter({ etat: { in: ['soumis', 'instruction'] } }),
+        compter({ etat: { equals: 'complement' } }),
+        compter({ etat: { in: ['admis', 'admis-condition', 'inscrit'] } }),
+        payload
+          .count({ collection: 'candidats', overrideAccess: true })
+          .then((r) => r.totalDocs)
+          .catch(() => 0),
+        payload
+          .count({ collection: 'personnes', overrideAccess: true })
+          .then((r) => r.totalDocs)
+          .catch(() => 0),
+      ])
+    : [0, 0, 0, 0, 0, 0];
 
-  const recentes = await payload
-    .find({
-      collection: 'candidatures',
-      where: { etat: { not_equals: 'brouillon' } },
-      sort: '-updatedAt',
-      limit: 6,
-      depth: 0,
-      overrideAccess: true,
-    })
-    .catch(() => ({ docs: [] as unknown[] }));
+  /* Pour les roles editoriaux, ce qui compte est l'etat des publications. */
+  const compterPublications = async (etat: string) => {
+    const rubriques = ['actualites', 'evenements', 'offres'] as const;
+    const totaux = await Promise.all(
+      rubriques.map((rubrique) =>
+        payload
+          .count({ collection: rubrique, where: { etat: { equals: etat } }, overrideAccess: true })
+          .then((r) => r.totalDocs)
+          .catch(() => 0),
+      ),
+    );
+    return totaux.reduce((somme, valeur) => somme + valeur, 0);
+  };
+
+  const [brouillons, aValider, publies] = voitLEditorial
+    ? await Promise.all([
+        compterPublications('brouillon'),
+        compterPublications('a-valider'),
+        compterPublications('publie'),
+      ])
+    : [0, 0, 0];
+
+  const recentes = voitLesDossiers
+    ? await payload
+        .find({
+          collection: 'candidatures',
+          where: { etat: { not_equals: 'brouillon' } },
+          sort: '-updatedAt',
+          limit: 6,
+          depth: 0,
+          overrideAccess: true,
+        })
+        .catch(() => ({ docs: [] as unknown[] }))
+    : { docs: [] as unknown[] };
 
   /* Tous les dossiers soumis, en deux champs : de quoi tracer le rythme de
      réception et la répartition par cycle sans multiplier les requêtes. */
-  const pourGraphiques = await payload
+  const pourGraphiques = !voitLesDossiers
+    ? ([] as Record<string, string | undefined>[])
+    : await payload
     .find({
       collection: 'candidatures',
       where: { etat: { not_equals: 'brouillon' } },
@@ -193,22 +238,72 @@ export default async function PageTableauDeBord() {
   return (
     <div className="flex flex-col gap-6">
       <EnTetePage
-        surtitre="Vue d’ensemble"
+        surtitre={LIBELLES_ROLE[agent.role]}
         titre={`${salutation}${agent.prenoms ? `, ${agent.prenoms}` : ''}.`}
         resume={
-          aInstruire > 0
-            ? `${aInstruire} dossier${aInstruire > 1 ? 's' : ''} attend${aInstruire > 1 ? 'ent' : ''} votre instruction.`
-            : 'Aucun dossier n’attend d’instruction pour le moment.'
+          voitLesDossiers
+            ? aInstruire > 0
+              ? `${aInstruire} dossier${aInstruire > 1 ? 's' : ''} attend${aInstruire > 1 ? 'ent' : ''} votre instruction.`
+              : 'Aucun dossier n’attend d’instruction pour le moment.'
+            : voitLEditorial
+              ? aValider > 0
+                ? `${aValider} contenu${aValider > 1 ? 'x' : ''} attend${aValider > 1 ? 'ent' : ''} une validation.`
+                : 'Aucun contenu n’attend de validation.'
+              : 'Votre rôle n’ouvre pas encore d’espace de travail dans le dispositif.'
         }
         actions={
-          <Link href="/gestion/candidatures" className="bouton bouton--principal">
-            Ouvrir les candidatures
-            <IconArrowRight className="h-4 w-4" />
-          </Link>
+          voitLesDossiers ? (
+            <Link href="/gestion/candidatures" className="bouton bouton--principal">
+              Ouvrir les candidatures
+              <IconArrowRight className="h-4 w-4" />
+            </Link>
+          ) : voitLEditorial ? (
+            <Link href="/gestion/publications" className="bouton bouton--principal">
+              Ouvrir les publications
+              <IconArrowRight className="h-4 w-4" />
+            </Link>
+          ) : null
         }
       />
 
+      {/* Le périmètre du rôle, à la première place où l'on regarde. */}
+      <Perimetre role={agent.role} />
+
       {/* ------------------------------------------------------------ Tuiles */}
+      {voitLEditorial && !voitLesDossiers ? (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Tuile
+            etiquette="Brouillons"
+            valeur={brouillons}
+            detail="En cours d’écriture"
+            icone={<IconFile />}
+            ton="encre"
+            href="/gestion/publications?vue=brouillon"
+          />
+          <Tuile
+            etiquette="À valider"
+            valeur={aValider}
+            detail={
+              agent.role === 'redacteur'
+                ? 'Soumis, en attente d’un éditeur'
+                : 'Soumis par un rédacteur'
+            }
+            icone={<IconClock />}
+            ton="or"
+            href="/gestion/publications?vue=a-valider"
+          />
+          <Tuile
+            etiquette="En ligne"
+            valeur={publies}
+            detail="Visibles sur le site"
+            icone={<IconCheck />}
+            ton="vert"
+            href="/gestion/publications?vue=publie"
+          />
+        </div>
+      ) : null}
+
+      {voitLesDossiers ? (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Tuile
           etiquette="Dossiers reçus"
@@ -247,8 +342,10 @@ export default async function PageTableauDeBord() {
           href="/gestion/candidatures?vue=decides"
         />
       </div>
+      ) : null}
 
       {/* -------------------------------------------------------- Réception */}
+      {voitLesDossiers ? (
       <Carte
         titre="Réception des dossiers"
         mention="Huit dernières semaines"
@@ -256,8 +353,10 @@ export default async function PageTableauDeBord() {
       >
         <Courbe serie={reception} titre="Dossiers reçus par semaine, sur les huit dernières semaines" />
       </Carte>
+      ) : null}
 
       {/* ------------------------------------------------- Derniers mouvements */}
+      {voitLesDossiers ? (
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <Carte titre="Derniers mouvements" lien={{ libelle: 'Tout voir', href: '/gestion/candidatures' }}>
           {recentes.docs.length === 0 ? (
@@ -340,6 +439,7 @@ export default async function PageTableauDeBord() {
           </Carte>
         </div>
       </div>
+      ) : null}
     </div>
   );
 }

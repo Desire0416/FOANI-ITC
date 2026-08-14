@@ -4,7 +4,7 @@ import { IconMail, IconPhone, IconUsers } from '@/components/brand/icons';
 import { Carte, EnTetePage, Pastille, Tuile, Vide } from '@/components/gestion/ui';
 import { formatDate } from '@/lib/etats';
 import { exigerRole, socle } from '@/lib/session';
-import { ROLES_CANDIDATURES } from '@/payload/roles';
+import { ROLES_COMPTES } from '@/payload/roles';
 
 export const metadata: Metadata = { title: 'Comptes candidats' };
 
@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: 'Comptes candidats' };
  * indiquant, pour chaque compte, s'il est rattaché au référentiel.
  */
 export default async function PageComptes() {
-  await exigerRole(ROLES_CANDIDATURES);
+  await exigerRole(ROLES_COMPTES);
   const payload = await socle();
 
   const resultat = await payload

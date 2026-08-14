@@ -12,8 +12,13 @@ import {
 } from '@/components/gestion/instruction';
 import { CYCLE_LABELS, getFormation, titreComplet } from '@/content/formations';
 import { etat as lireEtat, formatDate } from '@/lib/etats';
-import { exigerAgent, socle } from '@/lib/session';
-import { ROLES_CANDIDATURES } from '@/payload/roles';
+import { exigerRole, socle } from '@/lib/session';
+import {
+  ROLES_DECISION,
+  ROLES_DOSSIERS,
+  ROLES_INSTRUCTION,
+  ROLES_VERSEMENTS,
+} from '@/payload/roles';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -44,7 +49,7 @@ const MODES: Record<string, string> = {
  * L'agent ne quitte pas l'écran pour agir.
  */
 export default async function PageDossier({ params }: Params) {
-  const agent = await exigerAgent();
+  const agent = await exigerRole(ROLES_DOSSIERS);
   const { id } = await params;
   const payload = await socle();
 
@@ -62,7 +67,12 @@ export default async function PageDossier({ params }: Params) {
   const info = lireEtat(valeur('etat') ?? undefined);
   const voeu1 = valeur('voeu1') ? getFormation(valeur('voeu1') as string) : undefined;
   const voeu2 = valeur('voeu2') ? getFormation(valeur('voeu2') as string) : undefined;
-  const modifiable = ROLES_CANDIDATURES.includes(agent.role);
+  /* Un seul « modifiable » faisait apparaître les quatre panneaux d'un bloc.
+     Chaque acte a désormais son propre droit : l'écran n'offre que ce que le
+     rôle peut faire, et dit à qui revient le reste (§5.2). */
+  const peutInstruire = ROLES_INSTRUCTION.includes(agent.role);
+  const peutDecider = ROLES_DECISION.includes(agent.role);
+  const peutRapprocher = ROLES_VERSEMENTS.includes(agent.role);
 
   const pieces: PieceAffichee[] = (
     (dossier.pieces as Record<string, unknown>[] | undefined) ?? []
@@ -176,7 +186,7 @@ export default async function PageDossier({ params }: Params) {
             titre="Pièces justificatives"
             mention={`${pieces.filter((piece) => piece.etatPiece === 'acceptee').length} / ${pieces.length} acceptées`}
           >
-            <PiecesDuDossier id={id} pieces={pieces} modifiable={modifiable} />
+            <PiecesDuDossier id={id} pieces={pieces} modifiable={peutInstruire} />
           </Carte>
 
           <Carte titre="Journal du dossier">
@@ -205,7 +215,7 @@ export default async function PageDossier({ params }: Params) {
         {/* ------------------------------------------------------ Commandes */}
         <div className="flex flex-col gap-5">
           <Carte titre="Avancement">
-            <AvancementDossier id={id} etatCourant={valeur('etat') ?? ''} modifiable={modifiable} />
+            <AvancementDossier id={id} etatCourant={valeur('etat') ?? ''} modifiable={peutInstruire} />
           </Carte>
 
           <Carte titre="Frais de dossier">
@@ -214,7 +224,7 @@ export default async function PageDossier({ params }: Params) {
               reference={valeur('referenceTransaction')}
               mode={valeur('modeReglement') ? (MODES[valeur('modeReglement') as string] ?? null) : null}
               verifiee={dossier.transactionVerifiee === true}
-              modifiable={modifiable}
+              modifiable={peutRapprocher}
             />
           </Carte>
 
@@ -222,7 +232,7 @@ export default async function PageDossier({ params }: Params) {
             <DecisionDossier
               id={id}
               sensCourant={valeur('decisionSens')}
-              modifiable={modifiable}
+              modifiable={peutDecider}
             />
             {valeur('decisionSens') ? (
               <p className="mt-4 border-t border-graphite-100 pt-4 text-[0.75rem] leading-relaxed text-graphite-500">
