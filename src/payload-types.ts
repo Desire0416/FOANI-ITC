@@ -537,6 +537,19 @@ export interface Candidature {
   pieceRecto?: (number | null) | Piece;
   pieceVerso?: (number | null) | Piece;
   pieceSelfie?: (number | null) | Piece;
+  /**
+   * Scores de reconnaissance et de lecture. Aucun gabarit facial n’est conservé.
+   */
+  controleAuto?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  biometrieConsentieLe?: string | null;
   identiteControle?: ('attente' | 'conforme' | 'a-revoir') | null;
   identiteMotif?: string | null;
   identiteControleeLe?: string | null;
@@ -1030,6 +1043,8 @@ export interface CandidaturesSelect<T extends boolean = true> {
   pieceRecto?: T;
   pieceVerso?: T;
   pieceSelfie?: T;
+  controleAuto?: T;
+  biometrieConsentieLe?: T;
   identiteControle?: T;
   identiteMotif?: T;
   identiteControleeLe?: T;

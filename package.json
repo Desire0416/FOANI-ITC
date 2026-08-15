@@ -22,6 +22,7 @@
     "recette-admis": "payload run scripts/recette-admis.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-rekognition": "^3.1111.0",
     "@payloadcms/db-postgres": "3.88.0",
     "@payloadcms/db-sqlite": "3.88.0",
     "@payloadcms/next": "3.88.0",

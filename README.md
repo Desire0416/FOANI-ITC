@@ -313,7 +313,45 @@ tourne pas qu'une adresse ouverte capable de faire basculer des dossiers.
 Tant que la planification n'est pas active, le poste Admission déclenche le
 même balayage à la main depuis sa file de travail.
 
-### 5. Comptes
+### 5. Reconnaissance faciale
+
+**À n'activer qu'après autorisation de l'autorité de protection des données.**
+
+Comparer deux visages est un traitement de données biométriques. La loi
+ivoirienne n° 2013-450 le soumet à autorisation préalable. Ce n'est pas une
+interdiction, c'est une démarche — mais elle précède la mise en service, et
+elle incombe à l'établissement.
+
+Tant que `REKOGNITION_ACCESS_KEY_ID` et `REKOGNITION_SECRET_ACCESS_KEY` sont
+vides, le dispositif ne compare aucun visage, ne lit aucune pièce, et le dit
+au candidat comme à l'agent. Rien ne se met en marche par défaut.
+
+Une fois l'autorisation obtenue, ce que le dispositif fait :
+
+| Contrôle | Ce qu'il écarte |
+|---|---|
+| Un visage unique, net, de face, yeux visibles | Une photographie de mur, de paysage, de groupe |
+| Portrait comparé au visage de la pièce | Une pièce appartenant à quelqu'un d'autre |
+| Portrait comparé au porteur tenant la pièce | Une pièce authentique présentée par un tiers |
+| Texte de la pièce rapproché du nom et du numéro déclarés | Une saisie qui ne correspond pas au document |
+
+Trois issues, et non deux : ce qui est certainement inexploitable est refusé
+au dépôt, ce qui est douteux est signalé à l'agent avec son score, ce qui
+concorde nettement est marqué conforme. L'agent tranche dans tous les cas.
+
+Les seuils (90 % pour une concordance franche, 70 % en dessous desquels il n'y
+en a plus) sont dans `src/payload/biometrie/controles.ts`, sous `SEUILS`.
+
+Ce qui n'est **pas** fait, et ne doit pas l'être sans une nouvelle démarche :
+indexer les visages dans une collection, conserver un gabarit facial, ou
+rapprocher un visage d'une base de personnes. Les commandes employées sont
+sans état.
+
+Le consentement du candidat est recueilli avant tout envoi, distinctement de
+celui portant sur l'impression de sa photographie, et horodaté sur le dossier.
+Le refus est prévu et sans conséquence : le contrôle revient alors à l'agent.
+
+### 6. Comptes
 
 ```
 pnpm amorcer            # premier administrateur (ADMIN_EMAIL, ADMIN_MOT_DE_PASSE)

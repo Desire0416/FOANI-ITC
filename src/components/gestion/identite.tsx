@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { IconArrowUpRight, IconCheck, IconInfo } from '@/components/brand/icons';
 import { controlerIdentite } from '@/payload/actions/candidatures';
+import { RapportControle } from '@/components/commun/rapport-controle';
+import type { Rapport } from '@/payload/biometrie/controles';
 import { cn } from '@/lib/utils';
 
 /* ==========================================================================
@@ -53,6 +55,7 @@ export function ControleIdentite({
   controleLe,
   controlePar,
   autorise,
+  rapport,
 }: {
   id: string;
   cliches: readonly ClicheAgent[];
@@ -63,6 +66,7 @@ export function ControleIdentite({
   controleLe: string | null;
   controlePar: string | null;
   autorise: boolean;
+  rapport: Rapport | null;
 }) {
   const router = useRouter();
   const [motif, setMotif] = useState(motifExistant ?? '');
@@ -98,6 +102,16 @@ export function ControleIdentite({
           <IconInfo aria-hidden="true" className="mt-0.5 h-[1.125rem] w-[1.125rem] shrink-0" />
           {retour.message}
         </p>
+      ) : null}
+
+      {/* -------------------------------------------- Contrôle automatique */}
+      {rapport ? (
+        <div>
+          <p className="mb-2.5 text-[0.75rem] font-bold tracking-[0.12em] text-graphite-500 uppercase">
+            Contrôle automatique
+          </p>
+          <RapportControle rapport={rapport} avecScores />
+        </div>
       ) : null}
 
       {/* ------------------------------------------------- Doublon d'empreinte */}
@@ -191,8 +205,8 @@ export function ControleIdentite({
           ))}
         </dl>
         <p className="mt-3 text-[0.75rem] leading-relaxed text-graphite-500">
-          Comparez ces valeurs à celles portées sur la pièce. Le dispositif ne lit pas la pièce et
-          ne compare aucun visage&nbsp;: ce rapprochement vous appartient.
+          Comparez ces valeurs à celles portées sur la pièce. Le contrôle automatique vous
+          renseigne&nbsp;; il ne décide pas à votre place.
         </p>
       </div>
 

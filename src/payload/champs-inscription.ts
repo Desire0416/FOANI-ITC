@@ -479,6 +479,25 @@ export const CHAMPS_INSCRIPTION: Field = {
               ],
             },
             {
+              /* Le rapport du contrôle automatique — §5.4. Conservé tel quel :
+                 c'est lui qui rend arbitrable une contestation, et qui dit à
+                 l'agent sur quels chiffres il s'appuie. Aucun gabarit facial
+                 n'y figure : seulement des scores de comparaison. */
+              name: 'controleAuto',
+              type: 'json',
+              label: 'Rapport du contrôle automatique',
+              admin: {
+                readOnly: true,
+                description: 'Scores de reconnaissance et de lecture. Aucun gabarit facial n’est conservé.',
+              },
+            },
+            {
+              name: 'biometrieConsentieLe',
+              type: 'date',
+              label: 'Consentement au contrôle automatique donné le',
+              admin: { readOnly: true },
+            },
+            {
               type: 'row',
               fields: [
                 {

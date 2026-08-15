@@ -6,6 +6,12 @@ import { getPayload } from 'payload';
 import config from '@payload-config';
 import { candidatConnecte, dossierCourant } from '@/lib/candidat';
 import { empreinteDuFichier, empreinteSignature } from '@/payload/empreintes';
+import {
+  biometrieActive,
+  controlerIdentiteComplete,
+  controlerPortrait,
+  type Rapport,
+} from '@/payload/biometrie/controles';
 import { acheminerCode, emettreCode, verifierCode } from '@/payload/code-unique';
 import { REGLEMENTS, VERSION_REGLEMENTS } from '@/content/reglements';
 import { inscriptionEnvoyable } from '@/lib/etapes-inscription';
@@ -234,6 +240,18 @@ export async function deposerPhoto(_precedent: Etat, donnees: FormData): Promise
   const payload = await getPayload({ config });
   const octets = Buffer.from(await fichier.arrayBuffer());
 
+  /* Contrôle du visage avant tout enregistrement — §5.4. Une photographie sans
+     visage exploitable n'a pas à entrer dans le dossier : la refuser ici, avec
+     son motif, coûte au candidat une reprise ; l'accepter lui coûte trois
+     jours d'attente et un rejet par un agent. */
+  const rapportPortrait = await controlerPortrait(octets).catch(
+    () => null as Rapport | null,
+  );
+  if (rapportPortrait?.verdict === 'refuse') {
+    const cause = rapportPortrait.controles.find((controle) => controle.verdict === 'refuse');
+    return { message: cause?.detail ?? 'Cette photographie ne convient pas.', champ: 'photo' };
+  }
+
   try {
     const piece = await payload.create({
       collection: 'pieces',
@@ -295,6 +313,21 @@ export async function deposerCliche(_precedent: Etat, donnees: FormData): Promis
   const cliche = String(donnees.get('cliche') ?? '') as Cliche;
   if (!(cliche in CLICHES)) return { message: 'Cliché inconnu.' };
 
+  /* Le contrôle automatique compare des visages : c'est un traitement
+     biométrique, et il suppose un consentement libre, explicite et distinct de
+     celui portant sur l'impression de la photographie. Il est recueilli une
+     fois, au premier cliché, et horodaté. */
+  const dejaConsenti = Boolean(
+    (acces.dossier as unknown as Record<string, unknown>).biometrieConsentieLe,
+  );
+  if (biometrieActive() && !dejaConsenti && donnees.get('consentement') !== 'oui') {
+    return {
+      message:
+        'Cochez votre accord pour la vérification automatique avant de déposer votre pièce.',
+      champ: 'consentement',
+    };
+  }
+
   const fichier = donnees.get('fichier');
   if (!(fichier instanceof File) || fichier.size === 0) {
     return { message: 'Choisissez ou prenez une photographie.', champ: 'fichier' };
@@ -330,7 +363,11 @@ export async function deposerCliche(_precedent: Etat, donnees: FormData): Promis
     await payload.update({
       collection: 'candidatures',
       id: acces.dossier.id,
-      data: { [CLICHES[cliche]]: piece.id, identiteControle: 'attente' } as never,
+      data: {
+        [CLICHES[cliche]]: piece.id,
+        identiteControle: 'attente',
+        ...(dejaConsenti ? {} : { biometrieConsentieLe: new Date().toISOString() }),
+      } as never,
       overrideAccess: true,
       context: { auteurImpose: 'Candidat' },
     });
@@ -338,8 +375,70 @@ export async function deposerCliche(_precedent: Etat, donnees: FormData): Promis
     return { message: 'Le dépôt n’a pas abouti. Vérifiez votre connexion et réessayez.' };
   }
 
+  /* Le rapprochement des trois clichés, dès qu'ils sont réunis. Il est refait
+     à chaque dépôt : reprendre un cliché doit rejouer la comparaison, sans
+     quoi le rapport porterait sur une image qui n'est plus là. */
+  await rejouerControleIdentite(acces.dossier.id).catch(() => null);
+
   revalidatePath('/mon-dossier', 'layout');
   return RIEN;
+}
+
+/**
+ * Rejoue le contrôle croisé sur les trois clichés et la photographie.
+ *
+ * Les images sont relues depuis leur adresse de stockage pour la durée du
+ * contrôle, et ne sont pas conservées en mémoire au-delà. Seul le rapport —
+ * des verdicts et des scores — est enregistré. Aucun gabarit facial n'est
+ * produit ni stocké : ce serait constituer une base biométrique, ce qui est un
+ * traitement bien plus lourd que celui-ci et supposerait une autre démarche.
+ */
+async function rejouerControleIdentite(id: string | number): Promise<void> {
+  if (!biometrieActive()) return;
+
+  const payload = await getPayload({ config });
+  const dossier = (await payload.findByID({
+    collection: 'candidatures',
+    id,
+    depth: 1,
+    overrideAccess: true,
+  })) as unknown as Record<string, unknown>;
+
+  async function octetsDe(champ: string): Promise<Buffer | null> {
+    const valeur = dossier[champ] as { url?: string | null } | null;
+    if (!valeur || typeof valeur !== 'object' || !valeur.url) return null;
+    try {
+      const adresse = valeur.url.startsWith('http')
+        ? valeur.url
+        : `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}${valeur.url}`;
+      const reponse = await fetch(adresse, { cache: 'no-store' });
+      if (!reponse.ok) return null;
+      return Buffer.from(await reponse.arrayBuffer());
+    } catch {
+      return null;
+    }
+  }
+
+  const [portrait, recto, selfie] = await Promise.all([
+    octetsDe('photo'),
+    octetsDe('pieceRecto'),
+    octetsDe('pieceSelfie'),
+  ]);
+
+  const rapport = await controlerIdentiteComplete({
+    portrait,
+    recto,
+    selfie,
+    nomDeclare: [dossier.nomActe, dossier.prenomsActe].filter(Boolean).join(' '),
+    numeroDeclare: String(dossier.numeroPieceIdentite ?? ''),
+  });
+
+  await payload.update({
+    collection: 'candidatures',
+    id,
+    data: { controleAuto: rapport } as never,
+    overrideAccess: true,
+  });
 }
 
 /** Retire un cliché, pour le reprendre. */

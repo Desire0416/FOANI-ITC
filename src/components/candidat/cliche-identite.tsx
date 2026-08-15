@@ -139,12 +139,15 @@ export function ClicheIdentite({
   consigne,
   deja,
   ouvert,
+  consentementRequis = false,
 }: {
   cliche: Cliche;
   titre: string;
   consigne: string;
   deja: string | null;
   ouvert: boolean;
+  /** Le consentement au contrôle automatique n'a pas encore été donné. */
+  consentementRequis?: boolean;
 }) {
   const router = useRouter();
   const champ = useRef<HTMLInputElement>(null);
@@ -181,6 +184,7 @@ export function ClicheIdentite({
       const donnees = new FormData();
       donnees.set('cliche', cliche);
       donnees.set('fichier', verdict.fichier);
+      donnees.set('consentement', consentementRequis ? 'oui' : 'non');
 
       demarrer(async () => {
         const retour = await deposerCliche({ message: null }, donnees);

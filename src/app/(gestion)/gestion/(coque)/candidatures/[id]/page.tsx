@@ -24,6 +24,7 @@ import {
 import { dossiersPartageant } from '@/payload/empreintes';
 import { ControleIdentite } from '@/components/gestion/identite';
 import { ValiderInscription } from '@/components/gestion/validation';
+import type { Rapport } from '@/payload/biometrie/controles';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -292,6 +293,7 @@ export default async function PageDossier({ params }: Params) {
                 controleLe={(brut.identiteControleeLe as string | null) ?? null}
                 controlePar={agentControle}
                 autorise={peutControlerIdentite}
+                rapport={(brut.controleAuto as Rapport | null) ?? null}
               />
             </Carte>
           ) : null}
