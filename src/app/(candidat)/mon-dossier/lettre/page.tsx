@@ -14,6 +14,8 @@ import { ETABLISSEMENT } from '@/content/site';
 import { exigerDossier } from '@/lib/candidat';
 import { formatDate } from '@/lib/etats';
 import { delivrer } from '@/payload/documents';
+import { grilleApplicable, montantReservantLaPlace } from '@/payload/finances/grille';
+import { formaterMontant } from '@/payload/finances/montants';
 
 export const metadata: Metadata = { title: 'Ma lettre d’admission' };
 
@@ -27,12 +29,12 @@ export const metadata: Metadata = { title: 'Ma lettre d’admission' };
 
    Deux remarques sur ce que la lettre ne dit pas.
 
-   Le montant. L'établissement n'a communiqué aucun tarif : `fraisXof` vaut
-   `null` pour toutes les formations. Une lettre d'admission est un document
-   qui engage ; y porter un montant inventé serait la faute la plus grave que
-   ce dispositif puisse commettre. Le document dit donc ce qui est vrai — que
-   le montant est communiqué par le service des finances — et portera le
-   chiffre le jour où la grille tarifaire du chapitre 6 existera.
+   Le montant. Il vient de la grille arrêtée par la direction pour la formation
+   et l'année du candidat, et il est figé dans la lettre au moment de la remise,
+   comme tout le reste. Une grille arrêtée après coup ne réécrit pas une lettre
+   déjà remise : ce serait réclamer au candidat une somme qu'il n'a jamais lue.
+   Tant qu'aucune grille n'est arrêtée, la lettre renvoie au service des
+   finances plutôt que de porter un chiffre inventé.
 
    La civilité. Le dossier de candidature ne la recueille pas ; c'est l'étape 4
    du même chapitre qui recueillera « l'état civil complet ». La lettre s'ouvre
@@ -75,6 +77,13 @@ export default async function LettreAdmission() {
   const titulaire = [dossier.nom?.toUpperCase(), dossier.prenoms].filter(Boolean).join(' ').trim();
 
   const payload = await getPayload({ config });
+
+  /* Le montant réservant la place, lu dans la grille arrêtée pour la formation
+     et l'année du candidat — §6.3 : « frais d'inscription, exigibles à
+     l'acceptation de l'offre. Réservent la place. » */
+  const grille = await grilleApplicable(payload, dossier.voeu1, String(dossier.anneeEntree ?? ''));
+  const montantPlace = montantReservantLaPlace(grille);
+
   const lettre = await delivrer(payload, {
     nature: 'lettre-admission',
     candidature: dossier.id,
@@ -91,6 +100,11 @@ export default async function LettreAdmission() {
         anneeEntree: dossier.anneeEntree ? String(dossier.anneeEntree) : null,
         limiteAcceptation: dossier.limiteAcceptation ?? null,
         conditions: dossier.decisionConditions ?? null,
+        /* Le montant est figé au moment de la remise, comme le reste. Une
+           grille arrêtée après coup ne doit pas réécrire une lettre déjà
+           entre les mains du candidat : ce serait lui réclamer une somme
+           qu'il n'a jamais lue. */
+        montantPlace: montantPlace === null ? null : String(montantPlace),
       },
     },
   });
@@ -136,7 +150,12 @@ export default async function LettreAdmission() {
             cle: 'Date limite d’acceptation',
             valeur: limite ? formatDate(limite) : 'Communiquée par le service des admissions',
           },
-          { cle: 'Montant réservant la place', valeur: 'Communiqué par le service des finances' },
+          {
+            cle: 'Montant réservant la place',
+            valeur: mentions.montantPlace
+              ? formaterMontant(Number(mentions.montantPlace))
+              : 'Communiqué par le service des finances',
+          },
         ]}
       />
 

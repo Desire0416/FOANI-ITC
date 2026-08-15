@@ -5,8 +5,10 @@ import { AnnoncerVersement } from '@/components/candidat/offre';
 import { Carte } from '@/components/candidat/ui';
 import { EnTetePage } from '@/components/commun/ui';
 import { referenceReglement } from '@/app/(candidat)/mon-dossier/offre';
-import { CONTACT } from '@/content/site';
-import { exigerDossier } from '@/lib/candidat';
+import { CONTACT, ETABLISSEMENT } from '@/content/site';
+import { exigerDossier, socleCandidat } from '@/lib/candidat';
+import { grilleApplicable } from '@/payload/finances/grille';
+import { Tarifs } from '@/components/commun/tarifs';
 
 export const metadata: Metadata = { title: 'Mes paiements' };
 
@@ -24,9 +26,9 @@ export const metadata: Metadata = { title: 'Mes paiements' };
    le candidat. Elle est donc en grand, seule, sélectionnable — et le texte qui
    l'accompagne s'adresse autant au payeur qu'au titulaire.
 
-   Le montant n'y figure pas : l'établissement n'a communiqué aucune grille
-   tarifaire. Le chapitre 6 la posera, avec l'échéancier, le solde et les
-   reçus. Écrire un chiffre en attendant serait pire que de n'en écrire aucun.
+   Les montants viennent de la grille arrêtée par la direction pour la formation
+   du candidat. Tant qu'aucune ne l'est, la page le dit franchement plutôt que
+   d'afficher un zéro : un tarif non publié n'est pas une gratuité.
 
    « Dans tous les cas, la saisie dans le dispositif est le fait d'un agent :
    le dispositif n'encaisse rien. » C'est dit en toutes lettres à l'écran.
@@ -50,6 +52,13 @@ const MOYENS = [
 export default async function MesPaiements() {
   const { dossier } = await exigerDossier();
   const reglement = await referenceReglement(dossier.reference);
+
+  const rentree = new Date(ETABLISSEMENT.rentree).getFullYear();
+  const grille = await grilleApplicable(
+    await socleCandidat(),
+    dossier.voeu1,
+    `${rentree}-${rentree + 1}`,
+  );
 
   const annonceAttendue = dossier.etat === 'offre-acceptee';
 
@@ -155,17 +164,24 @@ export default async function MesPaiements() {
           </Carte>
 
           <Carte titre="Les montants">
-            <p className="text-[0.9375rem] leading-relaxed text-graphite-600">
-              L’établissement n’a pas encore publié sa grille tarifaire. Les montants vous sont
-              communiqués par le service des finances, qui vous indiquera aussi votre échéancier.
-            </p>
-            <Link
-              href={`tel:${CONTACT.telephone.valeur}`}
-              className="mt-4 inline-flex items-center gap-1.5 text-[0.875rem] font-semibold text-ink-700 hover:text-ink-600"
-            >
-              Appeler l’établissement — {CONTACT.telephone.affichage}
-              <IconArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            {grille ? (
+              <Tarifs grille={grille} />
+            ) : (
+              <>
+                <p className="text-[0.9375rem] leading-relaxed text-graphite-600">
+                  L’établissement n’a pas encore publié sa grille tarifaire. Les montants vous sont
+                  communiqués par le service des finances, qui vous indiquera aussi votre
+                  échéancier.
+                </p>
+                <Link
+                  href={`tel:${CONTACT.telephone.valeur}`}
+                  className="mt-4 inline-flex items-center gap-1.5 text-[0.875rem] font-semibold text-ink-700 hover:text-ink-600"
+                >
+                  Appeler l’établissement — {CONTACT.telephone.affichage}
+                  <IconArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </>
+            )}
           </Carte>
         </div>
       </div>

@@ -5,6 +5,10 @@ import { CadreEtape } from '@/components/candidat/cadre-etape';
 import { Formulaire } from '@/components/candidat/formulaire';
 import { Alerte, Carte, Champ, Liste } from '@/components/candidat/ui';
 import { exigerDossier } from '@/lib/candidat';
+import { socleCandidat } from '@/lib/candidat';
+import { ETABLISSEMENT } from '@/content/site';
+import { fraisDeDossier, grilleApplicable } from '@/payload/finances/grille';
+import { formaterMontant } from '@/payload/finances/montants';
 import { dossierModifiable } from '@/lib/etapes-dossier';
 
 export const metadata: Metadata = { title: 'Frais de dossier' };
@@ -29,6 +33,16 @@ export default async function EtapeFrais() {
   const { dossier } = await exigerDossier();
   const ouvert = dossierModifiable(dossier);
 
+  /* Le montant vient de la grille arrêtée pour le premier vœu du candidat.
+     Tant qu'aucune ne l'est, `null` — et l'écran le dit franchement. */
+  const rentree = new Date(ETABLISSEMENT.rentree).getFullYear();
+  const grille = await grilleApplicable(
+    await socleCandidat(),
+    dossier.voeu1,
+    `${rentree}-${rentree + 1}`,
+  );
+  const montant = fraisDeDossier(grille);
+
   return (
     <CadreEtape
       dossier={dossier}
@@ -36,16 +50,32 @@ export default async function EtapeFrais() {
       chapo="Cette étape est facultative. Si vous avez déjà réglé les frais de dossier, recopiez ici la référence que votre opérateur vous a envoyée."
     >
       <div className="flex flex-col gap-6">
-        <Alerte ton="attention" titre="Le montant n’est pas encore publié">
-          La direction n’a pas arrêté le montant des frais de dossier ni les numéros officiels de
-          réception. Nous préférons ne rien afficher plutôt qu’un chiffre que l’établissement n’a pas
-          validé.{' '}
-          <Link href="/contact?sujet=frais" className="font-semibold underline">
-            Écrivez-nous
-          </Link>{' '}
-          pour connaître les conditions applicables à votre formation — et envoyez votre dossier sans
-          attendre&nbsp;: cette étape ne le bloque pas.
-        </Alerte>
+        {montant === null ? (
+          <Alerte ton="attention" titre="Le montant n’est pas encore publié">
+            La direction n’a pas arrêté le montant des frais de dossier. Nous préférons ne rien
+            afficher plutôt qu’un chiffre que l’établissement n’a pas validé.{' '}
+            <Link href="/contact?sujet=frais" className="font-semibold underline">
+              Écrivez-nous
+            </Link>{' '}
+            pour connaître les conditions applicables à votre formation — et envoyez votre dossier
+            sans attendre&nbsp;: cette étape ne le bloque pas.
+          </Alerte>
+        ) : (
+          <Carte titre="Ce que vous devez régler">
+            <p className="font-display text-[2rem] leading-none text-ink-800 tabular-nums">
+              {formaterMontant(montant)}
+            </p>
+            <p className="mt-2.5 text-[0.9375rem] leading-relaxed text-graphite-600">
+              Frais de dossier, exigibles à l’envoi de votre candidature. Ils ne sont pas
+              remboursables, y compris si votre candidature n’est pas retenue.
+            </p>
+            <p className="mt-3 text-[0.8125rem] leading-relaxed text-graphite-500">
+              Réglez par paiement mobile vers un numéro officiel de l’établissement, puis recopiez
+              ci-dessous la référence que votre opérateur vous a envoyée. Un agent la rapprochera de
+              son relevé.
+            </p>
+          </Carte>
+        )}
 
         {dossier.transactionVerifiee ? (
           <Alerte ton="reussite" titre="Votre paiement a été retrouvé">

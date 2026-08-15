@@ -34,6 +34,9 @@ import {
 } from '@/content/formations';
 import { ETABLISSEMENT } from '@/content/site';
 import { formatDate } from '@/lib/utils';
+import { socle } from '@/lib/session';
+import { grilleApplicable } from '@/payload/finances/grille';
+import { Tarifs } from '@/components/commun/tarifs';
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -63,6 +66,16 @@ export default async function FicheFormation({ params }: Params) {
 
   const titre = titreComplet(formation);
   const duree = dureeLisible(formation);
+
+  /* La grille arrêtée pour l'année de la rentrée. Lue à chaque rendu : elle
+     change quand la direction en arrête une nouvelle version, et le public doit
+     voir la dernière — jamais une copie figée dans le catalogue. */
+  const rentree = new Date(ETABLISSEMENT.rentree).getFullYear();
+  const grille = await grilleApplicable(
+    await socle(),
+    formation.slug,
+    `${rentree}-${rentree + 1}`,
+  );
 
   const proches = FORMATIONS.filter(
     (autre) =>
@@ -269,7 +282,15 @@ export default async function FicheFormation({ params }: Params) {
 
             <div>
               <SectionHeading eyebrow="Conditions financières" title="Frais de scolarité" />
-              {formation.fraisXof === null ? (
+              {/* La grille arrêtée par la direction fait foi. Tant qu'il n'y en
+                  a pas, on le dit : un tarif non publié n'est pas un tarif à
+                  zéro franc, et afficher un chiffre que l'établissement n'a pas
+                  arrêté serait l'engager à sa place. */}
+              {grille ? (
+                <div className="mt-8">
+                  <Tarifs grille={grille} />
+                </div>
+              ) : (
                 <>
                   <p className="mt-8 text-[0.9375rem] leading-relaxed text-graphite-500">
                     La grille tarifaire de cette formation n’est pas encore publiée. Nous préférons ne rien
@@ -284,10 +305,6 @@ export default async function FicheFormation({ params }: Params) {
                     }}
                   />
                 </>
-              ) : (
-                <p className="mt-8 font-display text-[2.5rem] leading-none text-ink-800">
-                  {new Intl.NumberFormat('fr-FR').format(formation.fraisXof)} FCFA
-                </p>
               )}
 
               <div className="mt-8 rounded-card-lg border border-graphite-100 bg-paper-tint p-6">
