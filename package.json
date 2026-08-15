@@ -20,7 +20,8 @@
     "recette-echeance": "payload run scripts/recette-echeance.ts",
     "recette-offre": "payload run scripts/recette-offre.ts",
     "recette-admis": "payload run scripts/recette-admis.ts",
-    "recette-visage": "payload run scripts/recette-visage.ts"
+    "recette-visage": "payload run scripts/recette-visage.ts",
+    "recette-montants": "payload run scripts/recette-montants.ts"
   },
   "dependencies": {
     "@aws-sdk/client-rekognition": "^3.1111.0",
