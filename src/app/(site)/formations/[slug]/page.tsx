@@ -38,6 +38,25 @@ import { socle } from '@/lib/session';
 import { grilleApplicable } from '@/payload/finances/grille';
 import { Tarifs } from '@/components/commun/tarifs';
 
+/**
+ * La fiche est prérendue, et régénérée.
+ *
+ * Elle lit désormais la grille tarifaire, qui n'est pas un contenu de
+ * catalogue : la direction peut en arrêter une nouvelle version à tout moment.
+ * Prérendre une fois, à la construction, figerait un tarif dans le
+ * déploiement — ce qui est arrivé, et a laissé un montant de recette affiché en
+ * public après son archivage.
+ *
+ * Deux mécanismes se complètent. L'arrêt d'une grille appelle
+ * `revalidatePath('/formations')` et régénère la page dans la seconde. Ce délai
+ * d'une heure est le filet : il rattrape toute écriture faite hors du
+ * dispositif, par script ou par la base.
+ *
+ * La page reste servie depuis le cache — le §18.2 demande qu'elle soit lisible
+ * sur un réseau dégradé, ce qu'un rendu à la demande ne garantirait pas.
+ */
+export const revalidate = 3600;
+
 type Params = { params: Promise<{ slug: string }> };
 
 export function generateStaticParams() {
