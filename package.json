@@ -24,7 +24,8 @@
     "recette-montants": "payload run scripts/recette-montants.ts",
     "etat-comptes": "payload run scripts/etat-comptes.ts",
     "reposer-acces": "payload run scripts/reposer-acces.ts",
-    "recette-droits-versement": "payload run scripts/recette-droits-versement.ts"
+    "recette-droits-versement": "payload run scripts/recette-droits-versement.ts",
+    "recette-sequences": "payload run scripts/recette-sequences.ts"
   },
   "dependencies": {
     "@aws-sdk/client-rekognition": "^3.1111.0",
