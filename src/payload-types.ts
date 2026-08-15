@@ -469,7 +469,7 @@ export interface Candidature {
   referenceTransaction?: string | null;
   modeReglement?: ('mobile' | 'guichet' | 'virement') | null;
   /**
-   * La validation reste humaine : un agent rapproche la référence de son relevé.
+   * La validation reste humaine, et relève du seul service des finances : un agent rapproche la référence de son relevé.
    */
   transactionVerifiee?: boolean | null;
   decisionSens?: ('admis' | 'admis-condition' | 'attente' | 'refuse') | null;

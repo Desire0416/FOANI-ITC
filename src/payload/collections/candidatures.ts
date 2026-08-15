@@ -1,8 +1,8 @@
 import type { CollectionConfig, Where } from 'payload';
 import { CHAMPS_INSCRIPTION } from '../champs-inscription';
 import { CYCLE_LABELS, FORMATIONS, titreComplet } from '@/content/formations';
-import { reserveA, siensOuRoles, suppressionInterdite } from '../acces';
-import { ROLES_CANDIDATURES } from '../roles';
+import { champReserveA, reserveA, siensOuRoles, suppressionInterdite } from '../acces';
+import { ROLES_CANDIDATURES, ROLES_VERSEMENTS } from '../roles';
 import { limiteAcceptation } from '../chaine';
 import { attribuerReference } from '../sequence';
 
@@ -339,12 +339,30 @@ export const Candidatures: CollectionConfig = {
               ],
             },
             {
+              /* Ce drapeau dit qu'un versement est entré. Le poser sans qu'un
+                 franc soit arrivé réserve une place et ouvre un dossier
+                 d'inscription : c'est la seule case du dossier qui déplace de
+                 l'argent.
+
+                 Elle était ouverte à tout agent authentifié. L'action serveur
+                 `rapprocherTransaction` la réservait bien aux finances, mais
+                 l'API REST de Payload ne passe pas par elle : la scolarité et
+                 l'admission pouvaient la poser directement, ce qu'un contrôle
+                 a confirmé — HTTP 200, valeur à `true`. Le §4.8 sépare
+                 pourtant les pouvoirs sans ambiguïté, et `PERIMETRE_DETAILLE`
+                 l'écrit déjà.
+
+                 La restriction est donc portée au champ, où elle vaut quelle
+                 que soit la voie d'écriture. */
               name: 'transactionVerifiee',
               type: 'checkbox',
               label: 'Référence rapprochée du relevé',
               defaultValue: false,
-              access: { update: ({ req }) => req.user?.collection === 'utilisateurs' },
-              admin: { description: 'La validation reste humaine : un agent rapproche la référence de son relevé.' },
+              access: { update: champReserveA(ROLES_VERSEMENTS) },
+              admin: {
+                description:
+                  'La validation reste humaine, et relève du seul service des finances : un agent rapproche la référence de son relevé.',
+              },
             },
           ],
         },
