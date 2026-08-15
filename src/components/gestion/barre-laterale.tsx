@@ -18,6 +18,7 @@ import {
 import {
   ROLES_COMPTES,
   ROLES_DOSSIERS,
+  ROLES_GRILLES,
   ROLES_PERSONNES_LECTURE,
   ROLES_PIECES,
   type Role,
@@ -71,6 +72,17 @@ export const GROUPES: readonly Groupe[] = [
         href: '/gestion/pieces',
         icone: IconBriefcase,
         roles: ROLES_PIECES,
+      },
+    ],
+  },
+  {
+    titre: 'Finances',
+    entrees: [
+      {
+        libelle: 'Grilles tarifaires',
+        href: '/gestion/grilles',
+        icone: IconTarget,
+        roles: ROLES_GRILLES,
       },
     ],
   },

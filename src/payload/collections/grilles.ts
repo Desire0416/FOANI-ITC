@@ -273,7 +273,7 @@ export const Grilles: CollectionConfig = {
 
   hooks: {
     beforeChange: [
-      ({ data, operation, originalDoc, req }) => {
+      ({ data, operation, originalDoc }) => {
         /* ------------------------------------------------- L'immuabilité */
         if (operation === 'update' && originalDoc?.etat === 'arretee') {
           const versArchive = data.etat === 'archivee';
@@ -288,12 +288,11 @@ export const Grilles: CollectionConfig = {
           throw new Error('Une grille archivée ne se modifie plus.');
         }
 
-        // L'arrêt porte son auteur et sa date (§6.4, et §5.4 pour le principe).
+        /* L'arrêt porte sa date (§6.4, et §5.4 pour le principe). L'auteur,
+           lui, est posé par l'action qui arrête : elle le connaît, là où le
+           crochet devrait le déduire d'une session parfois partielle. */
         const arretMaintenant = data.etat === 'arretee' && originalDoc?.etat !== 'arretee';
-        if (arretMaintenant) {
-          data.arreteeLe = new Date().toISOString();
-          if (req.user?.collection === 'utilisateurs') data.arreteePar = req.user.id;
-        }
+        if (arretMaintenant) data.arreteeLe = new Date().toISOString();
 
         // Une évolution se justifie.
         if (arretMaintenant && Number(data.version ?? 1) > 1 && !String(data.motifVersion ?? '').trim()) {
