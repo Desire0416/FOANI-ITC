@@ -132,6 +132,16 @@ export const ROLES_DECISION: readonly Role[] = ['administrateur', 'admission'];
  */
 export const ROLES_VERSEMENTS: readonly Role[] = ['administrateur', 'finances'];
 
+/**
+ * Qui arrête une grille tarifaire — Note complémentaire §6.4.
+ *
+ * « La grille est définie par la direction. » Et, dans la même section : « un
+ * agent ne modifie jamais une grille ; il ne fait que constater des
+ * versements. » Le service des finances en est donc absent, ce que le poste
+ * Finances s'interdit déjà en toutes lettres dans `postes.ts`.
+ */
+export const ROLES_GRILLES: readonly Role[] = ['administrateur'];
+
 /** Tenir le référentiel des personnes : inscriptions, dossiers étudiants. */
 export const ROLES_PERSONNES: readonly Role[] = ['administrateur', 'scolarite'];
 

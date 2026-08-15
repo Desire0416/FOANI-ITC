@@ -74,6 +74,7 @@ export interface Config {
     candidatures: Candidature;
     pieces: Piece;
     documents: Document;
+    grilles: Grille;
     compteurs: Compteur;
     actualites: Actualite;
     evenements: Evenement;
@@ -91,6 +92,7 @@ export interface Config {
     candidatures: CandidaturesSelect<false> | CandidaturesSelect<true>;
     pieces: PiecesSelect<false> | PiecesSelect<true>;
     documents: DocumentsSelect<false> | DocumentsSelect<true>;
+    grilles: GrillesSelect<false> | GrillesSelect<true>;
     compteurs: CompteursSelect<false> | CompteursSelect<true>;
     actualites: ActualitesSelect<false> | ActualitesSelect<true>;
     evenements: EvenementsSelect<false> | EvenementsSelect<true>;
@@ -631,6 +633,103 @@ export interface Document {
   createdAt: string;
 }
 /**
+ * Ce que coûte une formation. Arrêtée par la direction, et immuable dès cet instant : une évolution donne lieu à une nouvelle version.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "grilles".
+ */
+export interface Grille {
+  id: number;
+  /**
+   * Composé à l’enregistrement, à partir de la formation, de l’année et de la version.
+   */
+  code?: string | null;
+  /**
+   * Une grille arrêtée n’est plus modifiable. Elle ne peut qu’être archivée.
+   */
+  etat: 'brouillon' | 'arretee' | 'archivee';
+  /**
+   * Les prestations aux organisations suivent un circuit distinct (§6.3).
+   */
+  circuit: 'academique' | 'cabinet';
+  /**
+   * Laissé vide pour une grille de session courte ou de prestation.
+   */
+  formation?:
+    | (
+        | 'bts-agriculture-tropicale-production-animale'
+        | 'bts-agriculture-tropicale-production-vegetale'
+        | 'bts-industrie-agroalimentaire-production'
+        | 'bts-industrie-agroalimentaire-controle'
+        | 'licence-production-animale-soins-veterinaires'
+        | 'licence-production-vegetale-protection-cultures'
+        | 'licence-fertilisation-gestion-durable-sols'
+        | 'licence-genie-environnement-finance-durable'
+        | 'licence-technologie-agriculture-intelligente'
+        | 'licence-agribusiness-management-chaines-valeur'
+        | 'licence-ingenierie-transformation-aliments'
+        | 'certificat-aviculture'
+        | 'certificat-porciculture'
+        | 'certificat-pisciculture'
+        | 'certificat-cuniculture'
+        | 'certificat-aulacodiculture'
+        | 'certificat-ruminants'
+        | 'certificat-apiculture'
+        | 'certificat-heliciculture'
+        | 'certificat-maraichage-durable'
+        | 'certificat-mais-manioc'
+        | 'certificat-banane-associations'
+        | 'certificat-agroecologie-agriculture-biologique'
+        | 'certificat-myciculture'
+        | 'certificat-culture-hors-sol'
+        | 'masterclass-pilotage-drone'
+        | 'masterclass-coeurs-de-metiers'
+        | 'masterclass-projet-de-stage'
+        | 'masterclass-entrepreneuriat'
+        | 'masterclass-art-oratoire'
+      )
+    | null;
+  anneeAcademique: string;
+  version: number;
+  /**
+   * Pour une session courte ou une prestation, qui n’ont pas de formation au catalogue.
+   */
+  intitule?: string | null;
+  /**
+   * Une ligne par nature de frais. Le total de la grille est la somme de ses lignes.
+   */
+  lignes?:
+    | {
+        nature: 'dossier' | 'inscription' | 'scolarite' | 'annexe' | 'session' | 'prestation';
+        libelle?: string | null;
+        /**
+         * Entier. Le franc CFA n’a pas de centime.
+         */
+        montant: number;
+        /**
+         * Laissé vide, le frais est dû en une fois. Sinon, une date par tranche : le montant se répartit sans perte.
+         */
+        echeances?:
+          | {
+              exigibleLe: string;
+              intitule?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  arreteeLe?: string | null;
+  arreteePar?: (number | null) | Utilisateur;
+  remplace?: (number | null) | Grille;
+  /**
+   * Obligatoire dès la deuxième version : une évolution de tarif se justifie.
+   */
+  motifVersion?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "compteurs".
  */
@@ -813,6 +912,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'documents';
         value: number | Document;
+      } | null)
+    | ({
+        relationTo: 'grilles';
+        value: number | Grille;
       } | null)
     | ({
         relationTo: 'compteurs';
@@ -1125,6 +1228,40 @@ export interface DocumentsSelect<T extends boolean = true> {
   personne?: T;
   delivreLe?: T;
   donnees?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "grilles_select".
+ */
+export interface GrillesSelect<T extends boolean = true> {
+  code?: T;
+  etat?: T;
+  circuit?: T;
+  formation?: T;
+  anneeAcademique?: T;
+  version?: T;
+  intitule?: T;
+  lignes?:
+    | T
+    | {
+        nature?: T;
+        libelle?: T;
+        montant?: T;
+        echeances?:
+          | T
+          | {
+              exigibleLe?: T;
+              intitule?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  arreteeLe?: T;
+  arreteePar?: T;
+  remplace?: T;
+  motifVersion?: T;
   updatedAt?: T;
   createdAt?: T;
 }
