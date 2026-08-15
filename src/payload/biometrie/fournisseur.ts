@@ -65,6 +65,16 @@ export type Comparaison = {
 
 export type Fournisseur = {
   readonly nom: string;
+  /**
+   * Le fournisseur sait-il lire le texte d'une pièce ?
+   *
+   * La distinction n'est pas cosmétique. Un fournisseur qui lit et ne trouve
+   * rien signale une pièce illisible — c'est un écart. Un fournisseur qui ne
+   * lit pas ne signale rien du tout : porter les deux cas au même verdict
+   * ferait finir chaque dossier en « à vérifier », et un signal qui se déclenche
+   * toujours cesse d'être un signal.
+   */
+  readonly litLeTexte: boolean;
   /** Les visages présents dans une image, du plus grand au plus petit. */
   detecterVisages(image: Buffer): Promise<readonly Visage[]>;
   /** Compare le visage de référence à celui de la cible. */

@@ -25,6 +25,35 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: '6mb' },
   },
 
+  /**
+   * Le moteur de reconnaissance faciale, et ce qu'il faut emporter.
+   *
+   * Les trois réseaux et les binaires WebAssembly vivent dans `modeles/visage`
+   * et sont lus depuis le disque à la première comparaison. Aucun n'est importé
+   * statiquement : le traceur de fichiers de Next ne peut pas les découvrir
+   * seul, et un déploiement les laisserait derrière — le dispositif se croirait
+   * armé et ne le serait pas.
+   *
+   * Les binaires WebAssembly ont été copiés ici plutôt que désignés dans leur
+   * paquet : sous pnpm, leur chemin passe par un dossier dont le nom porte la
+   * version et le graphe des dépendances, et le tracer par un motif faisait
+   * parcourir `node_modules` en entier — assez pour buter sur un lien cassé et
+   * faire échouer la construction.
+   */
+  outputFileTracingIncludes: {
+    '/mon-dossier/inscription/**': ['./modeles/visage/**'],
+    '/gestion/candidatures/**': ['./modeles/visage/**'],
+  },
+
+  /* Ces paquets chargent leurs poids et leurs binaires à l'exécution : les
+     empaqueter casserait ces résolutions. */
+  serverExternalPackages: [
+    '@tensorflow/tfjs',
+    '@tensorflow/tfjs-backend-wasm',
+    '@vladmandic/face-api',
+    'sharp',
+  ],
+
   images: {
     formats: ['image/avif', 'image/webp'],
     // Tailles alignées sur les largeurs réellement rendues (mobile-first 360 px).

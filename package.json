@@ -19,7 +19,8 @@
     "amorcer-agents": "payload run scripts/amorcer-agents.ts",
     "recette-echeance": "payload run scripts/recette-echeance.ts",
     "recette-offre": "payload run scripts/recette-offre.ts",
-    "recette-admis": "payload run scripts/recette-admis.ts"
+    "recette-admis": "payload run scripts/recette-admis.ts",
+    "recette-visage": "payload run scripts/recette-visage.ts"
   },
   "dependencies": {
     "@aws-sdk/client-rekognition": "^3.1111.0",
@@ -31,6 +32,9 @@
     "@payloadcms/storage-vercel-blob": "3.88.0",
     "@payloadcms/translations": "3.88.0",
     "@payloadcms/ui": "3.88.0",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.22.0",
+    "@vladmandic/face-api": "^1.7.15",
     "graphql": "^16.14.2",
     "next": "16.3.0",
     "payload": "3.88.0",

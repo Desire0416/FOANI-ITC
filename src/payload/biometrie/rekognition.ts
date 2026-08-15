@@ -63,6 +63,7 @@ export function rekognitionConfigure(): boolean {
 
 export const rekognition: Fournisseur = {
   nom: 'Amazon Rekognition',
+  litLeTexte: true,
 
   async detecterVisages(image) {
     const reponse = await connexion().send(

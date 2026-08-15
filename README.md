@@ -315,41 +315,61 @@ même balayage à la main depuis sa file de travail.
 
 ### 5. Reconnaissance faciale
 
-**À n'activer qu'après autorisation de l'autorité de protection des données.**
-
-Comparer deux visages est un traitement de données biométriques. La loi
-ivoirienne n° 2013-450 le soumet à autorisation préalable. Ce n'est pas une
-interdiction, c'est une démarche — mais elle précède la mise en service, et
-elle incombe à l'établissement.
-
-Tant que `REKOGNITION_ACCESS_KEY_ID` et `REKOGNITION_SECRET_ACCESS_KEY` sont
-vides, le dispositif ne compare aucun visage, ne lit aucune pièce, et le dit
-au candidat comme à l'agent. Rien ne se met en marche par défaut.
-
-Une fois l'autorisation obtenue, ce que le dispositif fait :
+**Elle fonctionne sans rien configurer.** Le moteur est embarqué : trois
+réseaux de neurones dans `modeles/visage` (14 Mo, versés au dépôt), exécutés
+par WebAssembly sur le serveur. Aucun compte, aucun coût par appel, et aucune
+image ne quitte le dispositif.
 
 | Contrôle | Ce qu'il écarte |
 |---|---|
-| Un visage unique, net, de face, yeux visibles | Une photographie de mur, de paysage, de groupe |
+| Un visage unique, assez grand, de face | Une photographie de mur, de paysage, de groupe |
 | Portrait comparé au visage de la pièce | Une pièce appartenant à quelqu'un d'autre |
 | Portrait comparé au porteur tenant la pièce | Une pièce authentique présentée par un tiers |
-| Texte de la pièce rapproché du nom et du numéro déclarés | Une saisie qui ne correspond pas au document |
 
-Trois issues, et non deux : ce qui est certainement inexploitable est refusé
-au dépôt, ce qui est douteux est signalé à l'agent avec son score, ce qui
-concorde nettement est marqué conforme. L'agent tranche dans tous les cas.
+Trois issues, et non deux : ce qui est certainement inexploitable est refusé au
+dépôt, ce qui est douteux est signalé à l'agent avec son score, ce qui concorde
+nettement est marqué conforme. L'agent tranche dans tous les cas.
+
+Mesuré sur des portraits réels : deux photographies d'une même personne à
+100 %, deux personnes différentes à 48 %, une image sans visage distinguée
+d'une absence de correspondance. Chaque comparaison prend deux à trois
+secondes, une fois les modèles chargés — ce qui tient dans le temps que le
+candidat passe déjà à envoyer son image.
+
+Pour éprouver le moteur sur vos propres photographies :
+
+```bash
+pnpm recette-visage /chemin/vers/un/dossier
+```
+
+Le dossier doit contenir `portrait.jpg`, `meme2.jpg` (la même personne, autre
+cliché) et `autre.jpg` (quelqu'un d'autre). Ces images ne sont pas versées au
+dépôt : ce sont des visages, et un dépôt public n'est pas leur place.
+
+**Ce que le moteur local ne fait pas** : lire le texte des pièces. Le
+rapprochement du nom et du numéro déclarés reste à l'agent, et l'écran le dit.
+Renseigner `REKOGNITION_ACCESS_KEY_ID` et `REKOGNITION_SECRET_ACCESS_KEY`
+bascule sur Amazon Rekognition, qui lit en outre ce texte — au prix d'un compte
+et d'un transfert hors de Côte d'Ivoire. Le moteur local reste le défaut.
+
+`BIOMETRIE_LOCALE=0` éteint le moteur : le dispositif ne compare alors plus
+rien, et le dit au candidat comme à l'agent.
+
+**Une démarche préalable, et elle incombe à l'établissement.** Comparer deux
+visages est un traitement de données biométriques, que la loi ivoirienne
+n° 2013-450 soumet à autorisation préalable de l'autorité de protection. Le
+calcul se faisant ici, sur le serveur de l'établissement, le dossier est plus
+simple qu'avec un service tiers — il n'y a ni transfert ni sous-traitant à
+déclarer. Mais la démarche demeure, et elle précède la mise en service.
+
+Trois garanties sont dans le code, pas seulement dans cette page : aucun
+gabarit facial n'est produit ni conservé — seuls des scores le sont ; le
+consentement du candidat est recueilli avant tout dépôt, distinct de celui
+portant sur l'impression de sa photographie, horodaté, et refusable sans
+conséquence sur l'inscription ; les images sont analysées puis oubliées.
 
 Les seuils (90 % pour une concordance franche, 70 % en dessous desquels il n'y
 en a plus) sont dans `src/payload/biometrie/controles.ts`, sous `SEUILS`.
-
-Ce qui n'est **pas** fait, et ne doit pas l'être sans une nouvelle démarche :
-indexer les visages dans une collection, conserver un gabarit facial, ou
-rapprocher un visage d'une base de personnes. Les commandes employées sont
-sans état.
-
-Le consentement du candidat est recueilli avant tout envoi, distinctement de
-celui portant sur l'impression de sa photographie, et horodaté sur le dossier.
-Le refus est prévu et sans conséquence : le contrôle revient alors à l'agent.
 
 ### 6. Comptes
 

@@ -1,4 +1,5 @@
 import type { Fournisseur } from './fournisseur';
+import { fournisseurLocal, localDisponible } from './local';
 import { rekognition, rekognitionConfigure } from './rekognition';
 
 /* ==========================================================================
@@ -82,9 +83,21 @@ export type Rapport = {
   readonly verdict: Verdict;
 };
 
-/** Le fournisseur configuré, ou `null` si l'établissement n'en a branché aucun. */
+/**
+ * Le fournisseur en service.
+ *
+ * Le service distant l'emporte s'il est configuré : il lit en outre le texte
+ * des pièces, ce que le moteur local ne fait pas. À défaut, le moteur local
+ * prend le relais — et c'est le cas ordinaire, puisqu'il ne demande ni compte
+ * ni configuration. Le dispositif n'est donc jamais muet par défaut.
+ *
+ * `null` ne subsiste que si l'établissement a explicitement éteint le moteur
+ * local et n'a pas branché de service distant.
+ */
 export function fournisseur(): Fournisseur | null {
-  return rekognitionConfigure() ? rekognition : null;
+  if (rekognitionConfigure()) return rekognition;
+  if (localDisponible()) return fournisseurLocal;
+  return null;
 }
 
 export function biometrieActive(): boolean {
@@ -378,6 +391,17 @@ export async function controlerIdentiteComplete(
 
   /* ------------------------------------------------------ Ce qui est déclaré */
   if (pieces.recto) {
+    if (!service.litLeTexte) {
+      controles.push({
+        cle: 'lecture',
+        libelle: 'Lecture de la pièce',
+        verdict: 'indisponible',
+        detail:
+          'Le texte de la pièce n’est pas lu automatiquement : un agent le rapprochera de vos déclarations.',
+      });
+      return { fournisseur: service.nom, faitLe, controles, verdict: verdictGlobal(controles) };
+    }
+
     const lignes = await service.lireTexte(pieces.recto);
 
     if (lignes.length === 0) {
