@@ -14,6 +14,7 @@ import {
   ROLES_VERSEMENTS,
   type Role,
 } from '../roles';
+import { attribuerReference } from '../sequence';
 
 /* ==========================================================================
    Instruction d'une candidature — CDC §10.3
@@ -260,6 +261,74 @@ export async function controlerIdentite(
     };
   } catch {
     return { ok: false, message: 'Le contrôle n’a pas pu être enregistré.' };
+  }
+}
+
+/**
+ * Valide l'inscription — Note complémentaire §5.1, étape 7.
+ *
+ * « Le service Scolarité contrôle la complétude du dossier, la cohérence de
+ * l'identité et la présence des engagements signés, puis valide. Le numéro
+ * étudiant est attribué et l'inscription créée pour l'année et le niveau
+ * concernés. »
+ *
+ * Les trois contrôles sont rejoués ici, côté serveur, et pas seulement
+ * affichés à l'agent : un écran peut être contourné, une action non. Le numéro
+ * étudiant n'est attribué qu'une fois — RG-47, « jamais à l'admission » — et
+ * il est opaque, le §11.1 interdisant qu'il encode la filière ou le niveau.
+ */
+export async function validerInscription(id: string): Promise<Retour> {
+  const { payload, user } = await contexte();
+  if (!habilite(user, ROLES_SCOLARITE_IDENTITE)) {
+    return {
+      ok: false,
+      message:
+        'La validation d’une inscription relève du service de la scolarité : qui décide de l’admission ne valide pas l’inscription.',
+    };
+  }
+
+  try {
+    const dossier = (await payload.findByID({
+      collection: 'candidatures',
+      id,
+      depth: 0,
+      overrideAccess: true,
+    })) as unknown as Record<string, unknown>;
+
+    if (dossier.etat !== 'inscription-a-valider') {
+      return { ok: false, message: 'Ce dossier n’est pas en attente de validation.' };
+    }
+    if (dossier.identiteControle !== 'conforme') {
+      return {
+        ok: false,
+        message: 'L’identité n’a pas été vérifiée. Procédez d’abord au contrôle visuel.',
+      };
+    }
+    if (!dossier.engagementsSignesLe) {
+      return {
+        ok: false,
+        message: 'Les engagements ne sont pas signés. L’inscription ne peut pas être prononcée.',
+      };
+    }
+
+    /* Le numéro n'est attribué qu'une fois : une seconde validation — après
+       une demande de complément, par exemple — ne renumérote pas l'étudiant. */
+    const numero =
+      (dossier.numeroEtudiant as string | null) ??
+      (await attribuerReference(payload, 'etudiant'));
+
+    await payload.update({
+      collection: 'candidatures',
+      id,
+      data: { etat: 'inscrit', numeroEtudiant: numero },
+      user,
+      overrideAccess: false,
+    });
+
+    rafraichir(id);
+    return { ok: true, message: `Inscription validée. Numéro étudiant attribué : ${numero}.` };
+  } catch {
+    return { ok: false, message: 'L’inscription n’a pas pu être validée.' };
   }
 }
 

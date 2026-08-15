@@ -525,6 +525,58 @@ export const CHAMPS_INSCRIPTION: Field = {
           ],
         },
 
+        /* --------------------------------------------- Signature (§5.1, ét. 6) */
+        {
+          type: 'collapsible',
+          label: 'Engagements signés',
+          fields: [
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'engagementsSignesLe',
+                  type: 'date',
+                  label: 'Signés le',
+                  admin: { width: '33%', readOnly: true, date: { displayFormat: 'dd/MM/yyyy HH:mm' } },
+                },
+                {
+                  /* Qui a apposé la signature. Pour un mineur, ce n'est pas
+                     l'étudiant mais son représentant légal (§5.1, étape 6). */
+                  name: 'engagementsSignataire',
+                  type: 'text',
+                  label: 'Signataire',
+                  admin: { width: '34%', readOnly: true },
+                },
+                {
+                  name: 'engagementsVersion',
+                  type: 'text',
+                  label: 'Version des textes signés',
+                  admin: {
+                    width: '33%',
+                    readOnly: true,
+                    description:
+                      'Le jour où le conseil arrête un texte définitif, cette version change et les signatures antérieures deviennent identifiables.',
+                  },
+                },
+              ],
+            },
+            {
+              /* « Le dispositif conserve le document signé, la date, l'heure et
+                 l'empreinte technique de la signature. » L'empreinte porte sur
+                 le texte intégral tel qu'il a été affiché, l'identité du
+                 signataire et l'horodatage : elle rend la signature opposable
+                 sans conserver de copie du texte pour chaque étudiant. */
+              name: 'engagementsEmpreinte',
+              type: 'text',
+              label: 'Empreinte de la signature',
+              admin: {
+                readOnly: true,
+                description: 'SHA-256 du texte signé, du signataire et de l’horodatage.',
+              },
+            },
+          ],
+        },
+
         /* ------------------------------------------------------- Achèvement */
         {
           name: 'inscriptionCompleteeLe',

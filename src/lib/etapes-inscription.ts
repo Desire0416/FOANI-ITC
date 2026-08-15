@@ -20,7 +20,8 @@ export type IdEtapeInscription =
   | 'residence'
   | 'urgence'
   | 'photo'
-  | 'piece-identite';
+  | 'piece-identite'
+  | 'engagements';
 
 export type EtapeInscription = {
   readonly id: IdEtapeInscription;
@@ -72,6 +73,13 @@ export const ETAPES_INSCRIPTION: readonly EtapeInscription[] = [
     libelle: 'Votre pièce d’identité',
     resume: 'Recto, verso, et vous la tenant.',
     href: '/mon-dossier/inscription/piece-identite',
+  },
+  {
+    id: 'engagements',
+    numero: 7,
+    libelle: 'Vos engagements',
+    resume: 'Le règlement de scolarité et l’engagement financier, à signer.',
+    href: '/mon-dossier/inscription/engagements',
   },
 ];
 
@@ -141,6 +149,10 @@ export function manquesInscription(
     if (vide(d.pieceRecto)) absents.push('le recto de votre pièce');
     if (vide(d.pieceVerso)) absents.push('le verso de votre pièce');
     if (vide(d.pieceSelfie)) absents.push('votre photographie tenant la pièce');
+  }
+
+  if (etape === 'engagements' && vide(d.engagementsSignesLe)) {
+    absents.push('votre signature');
   }
 
   return absents;

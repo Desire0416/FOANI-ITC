@@ -30,7 +30,34 @@ export const metadata: Metadata = { title: 'Mes documents' };
 /** Les natures qui savent s'afficher aujourd'hui, avec leur adresse. */
 const CONSULTABLES: Record<string, string> = {
   'lettre-admission': '/mon-dossier/lettre',
+  'certificat-scolarite': '/mon-dossier/certificat',
+  'attestation-inscription': '/mon-dossier/attestation',
+  'carte-etudiant': '/mon-dossier/carte',
 };
+
+/* Les documents dus à l'étudiant inscrit, délivrés à leur première ouverture.
+   Le reçu de versement n'y figure pas : il exige un montant, et la grille
+   tarifaire n'est pas arrêtée. Il relève du chapitre 6. */
+const DUS_A_L_INSCRIT = [
+  {
+    nature: 'certificat-scolarite',
+    titre: 'Certificat de scolarité',
+    detail: 'Atteste que vous êtes inscrit pour l’année en cours.',
+    href: '/mon-dossier/certificat',
+  },
+  {
+    nature: 'attestation-inscription',
+    titre: 'Attestation d’inscription',
+    detail: 'Pour vos démarches : demande de bourse, de logement.',
+    href: '/mon-dossier/attestation',
+  },
+  {
+    nature: 'carte-etudiant',
+    titre: 'Carte étudiant',
+    detail: 'Avec votre photographie et votre numéro. À présenter ou à imprimer.',
+    href: '/mon-dossier/carte',
+  },
+];
 
 export default async function MesDocuments() {
   const { dossier } = await exigerDossier();
@@ -59,9 +86,13 @@ export default async function MesDocuments() {
     'acces-ouverts',
   ].includes(dossier.etat);
 
-  const lettreDelivree = docs.some(
-    (document) => (document as { nature?: string }).nature === 'lettre-admission',
-  );
+  const delivrees = new Set(docs.map((document) => (document as { nature?: string }).nature));
+  const lettreDelivree = delivrees.has('lettre-admission');
+
+  /* Une fois inscrit, l'étudiant a droit à ces documents même s'il ne les a
+     jamais ouverts : on les lui annonce, et le lien les fabrique. */
+  const inscrit = ['inscrit', 'acces-ouverts'].includes(dossier.etat);
+  const aVenir = inscrit ? DUS_A_L_INSCRIT.filter((item) => !delivrees.has(item.nature)) : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -86,6 +117,15 @@ export default async function MesDocuments() {
             href="/mon-dossier/lettre"
           />
         ) : null}
+
+        {aVenir.map((item) => (
+          <LigneDocument
+            key={item.nature}
+            titre={item.titre}
+            detail={`${item.detail} À ouvrir pour la première fois : il sera numéroté à cet instant.`}
+            href={item.href}
+          />
+        ))}
 
         {docs.map((brut) => {
           const document = brut as unknown as {

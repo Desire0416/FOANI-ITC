@@ -398,6 +398,24 @@ export const Candidatures: CollectionConfig = {
     /* --------------------------------- Dossier d'inscription — §5.1 étape 4 */
     CHAMPS_INSCRIPTION,
 
+    {
+      /* RG-47 : « Le numéro étudiant est attribué à la validation de
+         l'inscription, jamais à l'admission. » Il est donc absent tant que la
+         scolarité n'a pas validé, et opaque une fois posé — le §11.1 interdit
+         qu'il encode la filière ou le niveau. */
+      name: 'numeroEtudiant',
+      type: 'text',
+      label: 'Numéro étudiant',
+      unique: true,
+      index: true,
+      access: { update: ({ req }) => req.user?.collection === 'utilisateurs' },
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Attribué à la validation de l’inscription, jamais à l’admission.',
+      },
+    },
+
     /* ----------------------------------------------------------- Journal */
     {
       name: 'journal',

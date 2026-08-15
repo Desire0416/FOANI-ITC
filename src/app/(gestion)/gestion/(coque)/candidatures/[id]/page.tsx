@@ -23,6 +23,7 @@ import {
 } from '@/payload/roles';
 import { dossiersPartageant } from '@/payload/empreintes';
 import { ControleIdentite } from '@/components/gestion/identite';
+import { ValiderInscription } from '@/components/gestion/validation';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -290,6 +291,32 @@ export default async function PageDossier({ params }: Params) {
                 motifExistant={(brut.identiteMotif as string | null) ?? null}
                 controleLe={(brut.identiteControleeLe as string | null) ?? null}
                 controlePar={agentControle}
+                autorise={peutControlerIdentite}
+              />
+            </Carte>
+          ) : null}
+
+          {/* Validation de l'inscription — §5.1 étape 7. N'apparaît que
+              lorsque le dossier est effectivement en attente, ou déjà validé. */}
+          {['inscription-a-valider', 'inscrit', 'acces-ouverts'].includes(String(dossier.etat)) ? (
+            <Carte
+              titre="Validation de l’inscription"
+              mention={brut.numeroEtudiant ? 'Prononcée' : 'En attente'}
+            >
+              <ValiderInscription
+                id={id}
+                conditions={[
+                  {
+                    libelle: 'Dossier d’inscription complet',
+                    remplie: Boolean(brut.inscriptionCompleteeLe),
+                  },
+                  { libelle: 'Identité vérifiée', remplie: verdictIdentite === 'conforme' },
+                  {
+                    libelle: 'Engagements signés',
+                    remplie: Boolean(brut.engagementsSignesLe),
+                  },
+                ]}
+                numeroExistant={(brut.numeroEtudiant as string | null) ?? null}
                 autorise={peutControlerIdentite}
               />
             </Carte>

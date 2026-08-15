@@ -541,7 +541,21 @@ export interface Candidature {
   identiteMotif?: string | null;
   identiteControleeLe?: string | null;
   identiteControleePar?: (number | null) | Utilisateur;
+  engagementsSignesLe?: string | null;
+  engagementsSignataire?: string | null;
+  /**
+   * Le jour où le conseil arrête un texte définitif, cette version change et les signatures antérieures deviennent identifiables.
+   */
+  engagementsVersion?: string | null;
+  /**
+   * SHA-256 du texte signé, du signataire et de l’horodatage.
+   */
+  engagementsEmpreinte?: string | null;
   inscriptionCompleteeLe?: string | null;
+  /**
+   * Attribué à la validation de l’inscription, jamais à l’admission.
+   */
+  numeroEtudiant?: string | null;
   /**
    * §10.3 — conserve l’auteur et la date de chaque décision.
    */
@@ -1020,7 +1034,12 @@ export interface CandidaturesSelect<T extends boolean = true> {
   identiteMotif?: T;
   identiteControleeLe?: T;
   identiteControleePar?: T;
+  engagementsSignesLe?: T;
+  engagementsSignataire?: T;
+  engagementsVersion?: T;
+  engagementsEmpreinte?: T;
   inscriptionCompleteeLe?: T;
+  numeroEtudiant?: T;
   journal?:
     | T
     | {

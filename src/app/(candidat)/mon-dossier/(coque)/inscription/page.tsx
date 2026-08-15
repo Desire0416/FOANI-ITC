@@ -13,6 +13,8 @@ import {
   manquesDuDossierInscription,
 } from '@/lib/etapes-inscription';
 import { cn } from '@/lib/utils';
+import { BoutonAction } from '@/components/candidat/formulaire';
+import { soumettreInscription } from './actions';
 
 export const metadata: Metadata = { title: 'Mon inscription' };
 
@@ -29,15 +31,6 @@ export const metadata: Metadata = { title: 'Mon inscription' };
    valider une inscription sans identité vérifiée ni engagement signé.
    ========================================================================== */
 
-const A_VENIR = [
-  {
-    numero: 7,
-    titre: 'Signature de vos engagements',
-    corps:
-      'Vous prendrez connaissance du règlement de scolarité et de votre engagement financier, avec son échéancier, puis vous signerez au moyen d’un code reçu sur votre téléphone.',
-  },
-];
-
 export default async function SommaireInscription() {
   const { dossier, ouvert } = await exigerDossierInscription();
 
@@ -48,6 +41,7 @@ export default async function SommaireInscription() {
   const complet = inscriptionEnvoyable(dossier);
   const reprise = etapeInscriptionAReprendre(dossier);
   const d = dossier as unknown as Record<string, string | null>;
+  const identiteVerifiee = d.identiteControle === 'conforme';
 
   return (
     <div className="flex flex-col gap-6">
@@ -111,42 +105,49 @@ export default async function SommaireInscription() {
         </section>
       ) : null}
 
-      {complet ? (
-        <Alerte ton="reussite" titre="Rien ne manque à votre dossier">
-          Vous pouvez encore le relire et le corriger tant que les deux étapes suivantes ne sont pas
-          ouvertes.
-        </Alerte>
+      {/* --------------------------------------------------------- L'envoi */}
+      {ouvert && complet ? (
+        <section className="carte overflow-hidden">
+          <header className="border-b border-graphite-100 bg-paper-tint px-5 py-4">
+            <h2 className="text-[1.0625rem] leading-snug">Envoyer mon dossier à la scolarité</h2>
+          </header>
+          <div className="p-5 sm:p-6">
+            {identiteVerifiee ? (
+              <>
+                <p className="text-[0.9375rem] leading-relaxed text-graphite-600">
+                  Tout est en place. Le service de la scolarité contrôlera une dernière fois votre
+                  dossier, puis prononcera votre inscription et vous attribuera votre numéro
+                  étudiant. Vous ne pourrez plus modifier ce dossier ensuite.
+                </p>
+                <BoutonAction
+                  action={soumettreInscription}
+                  libelle="Envoyer mon dossier d’inscription"
+                  libelleAttente="Envoi en cours…"
+                  variante="or"
+                  confirmation="Envoyer votre dossier d’inscription au service de la scolarité ? Vous ne pourrez plus le modifier."
+                  className="mt-5"
+                />
+              </>
+            ) : (
+              <p className="flex gap-3 text-[0.9375rem] leading-relaxed text-graphite-600">
+                <IconClock aria-hidden="true" className="mt-0.5 h-[1.125rem] w-[1.125rem] shrink-0 text-graphite-400" />
+                <span>
+                  Votre dossier est complet. Il partira dès que le service de la scolarité aura
+                  vérifié votre pièce d’identité&nbsp;: c’est le second regard que le dispositif
+                  impose avant toute inscription. Vous n’avez rien d’autre à faire.
+                </span>
+              </p>
+            )}
+          </div>
+        </section>
       ) : null}
 
-      {/* ------------------------------------------------------- Ce qui vient */}
-      <section className="carte overflow-hidden">
-        <header className="border-b border-graphite-100 bg-paper-tint px-5 py-4">
-          <h2 className="text-[1.0625rem] leading-snug">Les étapes suivantes</h2>
-        </header>
-        <div className="p-5 sm:p-6">
-          <p className="text-[0.9375rem] leading-relaxed text-graphite-600">
-            Votre inscription ne sera soumise à la scolarité qu’une fois cette étape accomplie.
-            Elle ouvrira dans cet espace&nbsp;; nous vous préviendrons.
-          </p>
-          <ul className="mt-5 flex flex-col gap-4">
-            {A_VENIR.map((etape) => (
-              <li key={etape.numero} className="flex items-start gap-3.5">
-                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-graphite-100 text-graphite-500">
-                  <IconClock className="h-3.5 w-3.5" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[0.9375rem] font-semibold text-graphite-600">
-                    {etape.titre}
-                  </span>
-                  <span className="mt-0.5 block text-[0.875rem] leading-relaxed text-graphite-500">
-                    {etape.corps}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      {!ouvert ? (
+        <Alerte titre="Votre dossier est entre les mains de la scolarité">
+          Vous pouvez le relire, mais plus le modifier. Nous vous préviendrons dès que votre
+          inscription sera prononcée.
+        </Alerte>
+      ) : null}
 
       {/* --------------------------------------------------- Ce qui est saisi */}
       <div className="grid gap-4 xl:grid-cols-2">

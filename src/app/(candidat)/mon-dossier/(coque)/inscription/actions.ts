@@ -5,7 +5,10 @@ import { revalidatePath } from 'next/cache';
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import { candidatConnecte, dossierCourant } from '@/lib/candidat';
-import { empreinteDuFichier } from '@/payload/empreintes';
+import { empreinteDuFichier, empreinteSignature } from '@/payload/empreintes';
+import { acheminerCode, emettreCode, verifierCode } from '@/payload/code-unique';
+import { REGLEMENTS, VERSION_REGLEMENTS } from '@/content/reglements';
+import { inscriptionEnvoyable } from '@/lib/etapes-inscription';
 import {
   ETAPES_INSCRIPTION,
   inscriptionModifiable,
@@ -360,6 +363,198 @@ export async function retirerCliche(cliche: Cliche): Promise<Etat> {
 
   revalidatePath('/mon-dossier', 'layout');
   return RIEN;
+}
+
+/* ------------------------------------- Signature des engagements (§5.1, ét. 6) */
+
+export type EtatSignature = {
+  readonly message: string | null;
+  readonly ok?: true;
+  readonly code?: string;
+};
+
+/**
+ * Émet le code qui vaudra signature.
+ *
+ * « Il signe électroniquement : case d'acceptation explicite, puis code à
+ * usage unique reçu sur son téléphone. » Les deux gestes comptent : la case
+ * marque le consentement, le code atteste que celui qui consent est bien le
+ * titulaire du numéro. L'un sans l'autre ne signe rien.
+ */
+export async function demanderCodeSignature(): Promise<EtatSignature> {
+  const acces = await dossierOuvert();
+  if (!acces.ok) return acces.etat;
+
+  const { code, empreinte, expire } = emettreCode();
+  const payload = await getPayload({ config });
+
+  try {
+    await payload.update({
+      collection: 'candidatures',
+      id: acces.dossier.id,
+      data: { codeEmpreinte: empreinte, codeExpire: expire, codeEssais: 0 } as never,
+      overrideAccess: true,
+    });
+  } catch {
+    return { message: 'Le code n’a pas pu être préparé. Réessayez dans un instant.' };
+  }
+
+  const acheminement = await acheminerCode(code, acces.dossier.telephone ?? null);
+
+  if (acheminement.envoye) {
+    return { ok: true, message: `Un code à six chiffres vient de partir vers ${acheminement.par}.` };
+  }
+
+  return {
+    message: `${acheminement.raison} Appelez le service de la scolarité : il peut recueillir votre signature pour votre compte.`,
+    ...(acheminement.codeVisible ? { code: acheminement.codeVisible } : {}),
+  };
+}
+
+/**
+ * Appose la signature — Note complémentaire §5.1, étape 6.
+ *
+ * « Le dispositif conserve le document signé, la date, l'heure et l'empreinte
+ * technique de la signature. »
+ *
+ * L'empreinte porte sur le texte intégral tel qu'il a été affiché, sur
+ * l'identité du signataire et sur l'horodatage. C'est ce qui rend la signature
+ * opposable sans conserver une copie du texte pour chaque étudiant : le texte
+ * est reconstituable depuis sa version, et l'empreinte prouve qu'il n'a pas
+ * bougé entre l'affichage et la signature.
+ *
+ * « Pour un candidat mineur, la signature est apposée par le représentant
+ * légal, sur son propre téléphone. » Le signataire est donc un champ, et non
+ * une déduction : c'est lui qui figure sur l'engagement.
+ */
+export async function signerEngagements(
+  _precedent: EtatSignature,
+  donnees: FormData,
+): Promise<EtatSignature> {
+  const acces = await dossierOuvert();
+  if (!acces.ok) return acces.etat;
+
+  if (donnees.get('lu') !== 'oui' || donnees.get('accepte') !== 'oui') {
+    return {
+      message: 'Cochez les deux cases : avoir pris connaissance des textes, et les accepter.',
+    };
+  }
+
+  const signataire = texte(donnees, 'signataire');
+  if (signataire.length < 3) {
+    return { message: 'Indiquez le nom et les prénoms du signataire.' };
+  }
+
+  const saisi = texte(donnees, 'code');
+  if (!saisi) return { message: 'Saisissez le code reçu sur votre téléphone.' };
+
+  const payload = await getPayload({ config });
+
+  const brut = (await payload.findByID({
+    collection: 'candidatures',
+    id: acces.dossier.id,
+    depth: 0,
+    overrideAccess: true,
+  })) as unknown as Record<string, unknown>;
+
+  const verdict = verifierCode(saisi, {
+    empreinte: brut.codeEmpreinte as string | null,
+    expire: brut.codeExpire as string | null,
+    essais: brut.codeEssais as number | null,
+  });
+
+  if (!verdict.ok) {
+    await payload
+      .update({
+        collection: 'candidatures',
+        id: acces.dossier.id,
+        data: verdict.brule
+          ? ({ codeEmpreinte: null, codeExpire: null, codeEssais: 0 } as never)
+          : ({ codeEssais: ((brut.codeEssais as number | null) ?? 0) + 1 } as never),
+        overrideAccess: true,
+      })
+      .catch(() => null);
+    return { message: verdict.message };
+  }
+
+  const horodatage = new Date().toISOString();
+  const empreinte = empreinteSignature({
+    version: VERSION_REGLEMENTS,
+    textes: REGLEMENTS,
+    signataire,
+    dossier: String(acces.dossier.reference ?? acces.dossier.id),
+    horodatage,
+  });
+
+  try {
+    await payload.update({
+      collection: 'candidatures',
+      id: acces.dossier.id,
+      data: {
+        engagementsSignesLe: horodatage,
+        engagementsSignataire: signataire,
+        engagementsVersion: VERSION_REGLEMENTS,
+        engagementsEmpreinte: empreinte,
+        codeEmpreinte: null,
+        codeExpire: null,
+        codeEssais: 0,
+      } as never,
+      overrideAccess: true,
+      context: { auteurImpose: 'Candidat (signature confirmée)' },
+    });
+  } catch {
+    return { message: 'Votre signature n’a pas pu être enregistrée. Réessayez.' };
+  }
+
+  revalidatePath('/mon-dossier', 'layout');
+  return { ok: true, message: 'Vos engagements sont signés.' };
+}
+
+/* ------------------------------------- Envoi à la scolarité (§5.1, étape 7) */
+
+/**
+ * Soumet le dossier d'inscription au service de la scolarité.
+ *
+ * Rien ne part tant que les sept étapes ne sont pas accomplies et que
+ * l'identité n'a pas été contrôlée. Ce dernier point n'est pas une précaution
+ * de confort : le §4.8 exige « deux regards successifs sur un même dossier,
+ * dont l'un porte spécifiquement sur les pièces », et laisser partir une
+ * inscription sans contrôle d'identité reviendrait à n'en avoir qu'un.
+ */
+export async function soumettreInscription(_precedent: Etat, _donnees: FormData): Promise<Etat> {
+  const acces = await dossierOuvert();
+  if (!acces.ok) return acces.etat;
+
+  if (!inscriptionEnvoyable(acces.dossier)) {
+    return { message: 'Votre dossier n’est pas complet. Reprenez les étapes signalées.' };
+  }
+
+  const controle = (acces.dossier as unknown as Record<string, unknown>).identiteControle;
+  if (controle !== 'conforme') {
+    return {
+      message:
+        'Votre identité n’a pas encore été vérifiée par le service de la scolarité. Votre dossier partira dès que ce contrôle aura été fait.',
+    };
+  }
+
+  const payload = await getPayload({ config });
+  try {
+    await payload.update({
+      collection: 'candidatures',
+      id: acces.dossier.id,
+      data: {
+        etat: 'inscription-a-valider',
+        inscriptionCompleteeLe: new Date().toISOString(),
+      } as never,
+      overrideAccess: true,
+      context: { auteurImpose: 'Candidat' },
+    });
+  } catch {
+    return { message: 'L’envoi n’a pas abouti. Réessayez.' };
+  }
+
+  revalidatePath('/mon-dossier', 'layout');
+  redirect('/mon-dossier?inscription=envoyee');
 }
 
 /** Retire la photographie, et avec elle le consentement qui la portait. */

@@ -96,3 +96,55 @@ export async function dossiersPartageant(
     };
   });
 }
+
+/* --------------------------------------------------------------------------
+   L'empreinte d'une signature — §5.1, étape 6
+   -------------------------------------------------------------------------- */
+
+/**
+ * L'empreinte technique d'une signature.
+ *
+ * « Le dispositif conserve le document signé, la date, l'heure et l'empreinte
+ * technique de la signature. »
+ *
+ * Elle porte sur quatre choses indissociables : le texte intégral tel qu'il a
+ * été affiché, sa version, l'identité du signataire et l'horodatage. Changer
+ * l'une quelconque change l'empreinte — ce qui est exactement ce qu'on attend
+ * d'une signature.
+ *
+ * Le texte n'est pas recopié pour chaque étudiant : il est reconstituable
+ * depuis sa version, et l'empreinte atteste qu'il n'a pas bougé entre
+ * l'affichage et la signature. En conserver une copie par étudiant pèserait
+ * sans rien prouver de plus.
+ */
+export function empreinteSignature(elements: {
+  readonly version: string;
+  readonly textes: readonly {
+    readonly titre: string;
+    readonly articles: readonly { readonly titre: string; readonly texte: string }[];
+  }[];
+  readonly signataire: string;
+  readonly dossier: string;
+  readonly horodatage: string;
+}): string {
+  const corps = elements.textes
+    .map((document) =>
+      [
+        document.titre,
+        ...document.articles.map((article) => `${article.titre}\n${article.texte}`),
+      ].join('\n'),
+    )
+    .join('\n\n');
+
+  return createHash('sha256')
+    .update(
+      [
+        elements.version,
+        corps,
+        elements.signataire,
+        elements.dossier,
+        elements.horodatage,
+      ].join('\u0000'),
+    )
+    .digest('hex');
+}
