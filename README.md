@@ -376,7 +376,10 @@ en a plus) sont dans `src/payload/biometrie/controles.ts`, sous `SEUILS`.
 ```
 pnpm amorcer            # premier administrateur (ADMIN_EMAIL, ADMIN_MOT_DE_PASSE)
 pnpm creer-agent        # un agent, avec son rôle (AGENT_EMAIL, AGENT_MOT_DE_PASSE, AGENT_ROLE)
-pnpm amorcer-agents     # neuf comptes d'essai, un par rôle — mots de passe affichés une fois
+pnpm amorcer-agents     # dix comptes d'essai, un par rôle — mots de passe affichés une fois
+pnpm etat-comptes       # qui existe, et ce qui bloque une connexion (verrouillage, essais manqués)
+pnpm reposer-acces      # régénère les mots de passe des agents et les affiche une fois
+                        # ROLE=finances pnpm reposer-acces pour un seul rôle
 pnpm recette-offre      # sans argument : liste les dossiers et leur état
                         # DOSSIER=D000004 : replace le dossier en « Admis »
 pnpm recette-admis      # DOSSIER=… MOTDEPASSE=… : rouvre le compte du candidat admis
