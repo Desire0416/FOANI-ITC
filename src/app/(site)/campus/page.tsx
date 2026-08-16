@@ -4,10 +4,17 @@ import { LeafSprig } from '@/components/brand/marks';
 import { PageHero } from '@/components/layout/page-hero';
 import { ButtonLink } from '@/components/ui/button';
 import { DonneeManquante } from '@/components/ui/donnee-manquante';
-import { MediaPlaceholder } from '@/components/ui/media-placeholder';
+import { PhotoLegendee } from '@/components/ui/photo';
 import { Container, Pill, Section, SectionHeading } from '@/components/ui/primitives';
 import { CAMPUS_RUBRIQUES, ENGAGEMENTS } from '@/content/institution';
+import { PHOTOS } from '@/content/photos';
 import { ETABLISSEMENT } from '@/content/site';
+
+/* La grille fait quatre colonnes au plus ; les deux grandes vignettes en
+   occupent deux. Le navigateur n'a pas à télécharger une image pleine largeur
+   pour la poser dans un huitième d'écran. */
+const SIZES_VIGNETTE = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw';
+const SIZES_LARGE = '(max-width: 640px) 100vw, 50vw';
 
 export const metadata: Metadata = {
   title: 'Vie du campus',
@@ -33,28 +40,59 @@ export default function PageCampus() {
         }
       />
 
-      {/* --------------------------------------------------------------- Galerie */}
+      {/* --------------------------------------------------------------- Galerie
+          Le corpus photographique de l'établissement, dans son ensemble. C'est
+          la page où quelqu'un vient pour voir à quoi ressemble l'endroit : elle
+          montre tout ce dont nous disposons, sans trier pour faire joli. Les
+          deux grandes vignettes ouvrent et referment la série ; entre les deux,
+          la grille alterne les bâtiments, les cultures et les élevages, dans
+          l'ordre où on les rencontre en traversant le campus.
+
+          Aucune image ne vient d'ailleurs (§9.3). La vidéo, elle, reste à
+          produire — c'est ce que dit la mention en bas de section. */}
       <Section tone="paper" id="galerie" className="py-14 lg:py-16">
         <Container>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <MediaPlaceholder
-              sujet="Vue d’ensemble du campus"
-              ratio="aspect-[4/3]"
-              className="reveal sm:col-span-2 sm:aspect-[16/9]"
+            <PhotoLegendee
+              photo={PHOTOS.campusCour}
+              ratio="aspect-[4/3] sm:aspect-[16/9]"
+              sizes={SIZES_LARGE}
+              className="reveal sm:col-span-2"
             />
-            <MediaPlaceholder sujet="Salles de cours" ratio="aspect-[4/3]" className="reveal" />
-            <MediaPlaceholder sujet="Laboratoire d’analyse" ratio="aspect-[4/3]" className="reveal" />
-            <MediaPlaceholder sujet="Ateliers d’élevage" ratio="aspect-[4/3]" className="reveal" />
-            <MediaPlaceholder sujet="Parcelles de production" ratio="aspect-[4/3]" className="reveal" />
-            <MediaPlaceholder
-              sujet="Vie étudiante"
-              ratio="aspect-[4/3]"
-              className="reveal sm:col-span-2 sm:aspect-[16/9]"
+            <PhotoLegendee photo={PHOTOS.amphitheatreEstrade} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.bibliotheque} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.alleeBatiments} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.amphitheatreGradins} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee
+              photo={PHOTOS.atelierProductionVegetale}
+              ratio="aspect-[4/3] sm:aspect-[16/9]"
+              sizes={SIZES_LARGE}
+              className="reveal sm:col-span-2"
             />
+            <PhotoLegendee photo={PHOTOS.serreMaraichage} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.serreMaraichageAllee} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.pepiniere} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.pepiniereVueLarge} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.bananeraie} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.bananeraieAllee} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.jardinAromatique} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.abordsFleuris} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.elevageCailles} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.elevageCaillesVoliere} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.elevagePoussins} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.elevageLapins} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee
+              photo={PHOTOS.citeUniversitairePanorama}
+              ratio="aspect-[4/3] sm:aspect-[16/9]"
+              sizes={SIZES_LARGE}
+              className="reveal sm:col-span-2"
+            />
+            <PhotoLegendee photo={PHOTOS.citeUniversitaire} sizes={SIZES_VIGNETTE} className="reveal" />
+            <PhotoLegendee photo={PHOTOS.bananeraieJeunesPlants} sizes={SIZES_VIGNETTE} className="reveal" />
           </div>
           <DonneeManquante
             className="mt-8"
-            quoi="Corpus photographique et vidéo du campus : à produire par l'établissement. Aucun visuel provenant d'un autre établissement n'est utilisé ici."
+            quoi="Vidéo de présentation du campus : à produire par l'établissement. Les photographies ci-dessus ont toutes été prises sur le site d'Agnibilékrou ; aucun visuel provenant d'un autre établissement n'est utilisé ici."
             action={null}
           />
         </Container>

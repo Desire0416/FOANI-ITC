@@ -7,8 +7,10 @@ import { PageHero } from '@/components/layout/page-hero';
 import { ButtonLink } from '@/components/ui/button';
 import { DonneeManquante } from '@/components/ui/donnee-manquante';
 import { MediaPlaceholder } from '@/components/ui/media-placeholder';
+import { Photo } from '@/components/ui/photo';
 import { Container, Pill, Section, SectionHeading } from '@/components/ui/primitives';
 import { AGREMENTS, GOUVERNANCE, MISSION, MOT_DIRECTION, VALEURS, VISION } from '@/content/institution';
+import { PHOTOS } from '@/content/photos';
 import { CHIFFRES_CLES, ETABLISSEMENT } from '@/content/site';
 
 export const metadata: Metadata = {
@@ -92,7 +94,12 @@ export default function PageUniversite() {
               </div>
             </div>
 
-            <MediaPlaceholder sujet="Vue du campus de FOANI-ITC" ratio="aspect-[4/5]" className="reveal" />
+            <Photo
+              photo={PHOTOS.alleeBatiments}
+              ratio="aspect-[4/5]"
+              sizes="(max-width: 1024px) 100vw, 32vw"
+              className="reveal"
+            />
           </div>
         </Container>
       </Section>

@@ -7,6 +7,7 @@ import { fraunces, jakarta } from '@/lib/polices';
 import { REVEAL_SCRIPT } from '@/lib/reveal-script';
 import { lireConfiguration } from '@/lib/audience';
 import { ETABLISSEMENT } from '@/content/site';
+import { PHOTOS } from '@/content/photos';
 import './globals.css';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.foani-itc.ci';
@@ -35,6 +36,17 @@ export const metadata: Metadata = {
     locale: 'fr_CI',
     siteName: ETABLISSEMENT.nom,
     url: APP_URL,
+    /* Un lien partagé sur WhatsApp sans vignette est un lien qu'on n'ouvre
+       pas. C'est la cour du campus qui la fournit — une photographie de
+       l'établissement, pas un logo posé sur un aplat. */
+    images: [
+      {
+        url: PHOTOS.campusCour.src,
+        width: PHOTOS.campusCour.largeur,
+        height: PHOTOS.campusCour.hauteur,
+        alt: PHOTOS.campusCour.alt,
+      },
+    ],
   },
   robots: { index: true, follow: true },
   alternates: { canonical: '/' },

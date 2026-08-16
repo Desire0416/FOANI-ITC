@@ -21,7 +21,7 @@ import { PageHero } from '@/components/layout/page-hero';
 import { Accordion } from '@/components/ui/accordion';
 import { ButtonLink } from '@/components/ui/button';
 import { DonneeManquante } from '@/components/ui/donnee-manquante';
-import { MediaPlaceholder } from '@/components/ui/media-placeholder';
+import { PhotoLegendee } from '@/components/ui/photo';
 import { Container, LeafList, Pill, Section, SectionHeading } from '@/components/ui/primitives';
 import {
   CYCLE_LABELS,
@@ -32,6 +32,7 @@ import {
   getFormation,
   titreComplet,
 } from '@/content/formations';
+import { photoDuDomaine } from '@/content/photos';
 import { ETABLISSEMENT } from '@/content/site';
 import { formatDate } from '@/lib/utils';
 import { socle } from '@/lib/session';
@@ -393,7 +394,15 @@ export default async function FicheFormation({ params }: Params) {
             </div>
 
             <div className="flex flex-col gap-5">
-              <MediaPlaceholder sujet={`Travaux pratiques — ${titre}`} ratio="aspect-[4/3]" />
+              {/* L'installation du campus qui sert de support aux travaux
+                  pratiques du domaine, légendée pour ce qu'elle est. Voir
+                  `photoDuDomaine` : la fiche ne prétend pas montrer les
+                  travaux pratiques de cette formation-là. */}
+              <PhotoLegendee
+                photo={photoDuDomaine(formation.domaines)}
+                ratio="aspect-[4/3]"
+                sizes="(max-width: 1024px) 100vw, 30vw"
+              />
               <div className="rounded-card-lg border border-graphite-100 bg-paper p-6">
                 <p className="flex items-center gap-2.5 font-display text-[1.0625rem] text-ink-800">
                   <IconFile className="h-5 w-5 text-gold-600" />

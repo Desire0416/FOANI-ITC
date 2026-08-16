@@ -16,9 +16,11 @@ import { LaurelWreath, LeafSprig } from '@/components/brand/marks';
 import { CatalogueRapide, type EntreeApercu } from '@/components/sections/catalogue-rapide';
 import { ButtonLink } from '@/components/ui/button';
 import { MediaPlaceholder } from '@/components/ui/media-placeholder';
+import { Photo } from '@/components/ui/photo';
 import { Container, Pill, Section, SectionHeading } from '@/components/ui/primitives';
 import { FORMATIONS, dureeLisible, titreComplet } from '@/content/formations';
 import { MOT_DIRECTION } from '@/content/institution';
+import { PHOTOS } from '@/content/photos';
 import { actualitesPubliees, evenementsPublies } from '@/lib/contenus-publies';
 import { LIBELLE_CATEGORIE } from '@/lib/publications';
 import { RESSOURCES } from '@/content/ressources';
@@ -98,10 +100,11 @@ export function Pourquoi() {
           </div>
 
           <div className="reveal flex flex-col gap-5">
-            <MediaPlaceholder
-              sujet="Travaux pratiques sur les parcelles du campus"
+            <Photo
+              photo={PHOTOS.pepiniere}
               ratio="aspect-[4/5]"
               className="w-full"
+              sizes="(max-width: 1024px) 100vw, 32vw"
             />
             <div className="rounded-card-lg border border-graphite-100 bg-paper-tint p-6">
               <p className="font-display text-[1.375rem] leading-snug text-ink-800">
@@ -398,10 +401,10 @@ export function Campus() {
 
         <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {[
-            { sujet: 'Vue d’ensemble du campus', titre: 'Le campus', href: '/campus#infrastructures' },
-            { sujet: 'Parcelles et unités de production', titre: 'Les exploitations', href: '/campus#production' },
-            { sujet: 'Laboratoire et ateliers', titre: 'Les équipements', href: '/campus#infrastructures' },
-            { sujet: 'Vie étudiante et associations', titre: 'La vie étudiante', href: '/campus#associations' },
+            { photo: PHOTOS.alleeBatiments, titre: 'Le campus', href: '/campus#infrastructures' },
+            { photo: PHOTOS.bananeraieAllee, titre: 'Les exploitations', href: '/campus#production' },
+            { photo: PHOTOS.amphitheatreGradins, titre: 'Les équipements', href: '/campus#infrastructures' },
+            { photo: PHOTOS.citeUniversitaire, titre: 'La vie étudiante', href: '/campus#associations' },
           ].map((item, index) => (
             <Link
               key={item.titre}
@@ -409,14 +412,15 @@ export function Campus() {
               className="reveal group/tuile relative block overflow-hidden rounded-media"
               style={{ ['--reveal-delay' as string]: `${index * 80}ms` }}
             >
-              <MediaPlaceholder
-                sujet={item.sujet}
+              <Photo
+                photo={item.photo}
                 ratio="aspect-[3/4]"
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 24vw"
                 className="transition-transform duration-700 ease-[var(--ease-arc)] group-hover/tuile:[transform:scale(1.03)]"
               />
-              {/* Voile sombre sous le libellé : le fond est aujourd'hui un
-                  aplat bleu, mais il accueillera une photographie. Le contraste
-                  du texte ne doit pas dépendre de la luminosité de l'image. */}
+              {/* Voile sombre sous le libellé : le contraste du texte ne doit
+                  pas dépendre de la luminosité de la photographie — un ciel
+                  blanc de saison des pluies avalerait un titre clair. */}
               <span
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-x-0 top-0 h-28 rounded-t-media bg-gradient-to-b from-ink-950/75 to-transparent"

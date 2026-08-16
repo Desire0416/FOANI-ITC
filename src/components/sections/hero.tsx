@@ -11,6 +11,7 @@ import {
 import { ArcClipDef, ArcTrace, LaurelWreath, LeafSprig, StarMark } from '@/components/brand/marks';
 import { ButtonLink } from '@/components/ui/button';
 import { POURQUOI_FITC } from '@/content/institution';
+import { PHOTOS } from '@/content/photos';
 import { ETABLISSEMENT } from '@/content/site';
 
 /* ==========================================================================
@@ -28,9 +29,15 @@ import { ETABLISSEMENT } from '@/content/site';
 
    La composition en deux colonnes n'apparaît qu'à partir de 1280 px, et la
    hauteur du hero est pilotée en `vw`. Les deux vont ensemble : le panneau
-   photographique doit rester plus large que haut, sinon la découpe rogne les
-   étudiants par les côtés. En dessous, la photographie prend toute la largeur
+   photographique doit rester plus large que haut, sinon la découpe rogne le
+   sujet par les côtés. En dessous, la photographie prend toute la largeur
    de l'écran — plus immersive encore, et le cadrage reste entier.
+
+   La photographie est celle de l'ombrière de production végétale du campus.
+   Elle a remplacé une vue de synthèse — trois personnes en blouse dans une
+   serre industrielle — qui portait le logo de l'école sur des blouses que
+   personne n'a jamais portées ici, et montrait une installation qui n'est pas
+   la sienne. §9.3 l'interdisait déjà ; il ne manquait que la vraie image.
    ========================================================================== */
 
 const ICONES = {
@@ -156,8 +163,8 @@ export function Hero() {
             style={{ animation: 'rise-in 0.9s var(--ease-arc) 0.1s both' }}
           >
             <Image
-              src="/images/hero-serre.png"
-              alt="Trois étudiants de FOANI-ITC en blouse examinent des plants de salade sous serre, tablette à la main."
+              src={PHOTOS.serreMaraichage.src}
+              alt={PHOTOS.serreMaraichage.alt}
               fill
               priority
               sizes="(max-width: 1280px) 100vw, 54vw"
